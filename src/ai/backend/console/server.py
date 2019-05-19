@@ -35,7 +35,7 @@ async def server_main(loop, pidx, args):
     app['config'] = args[0]
     app['redis'] = await aioredis.create_pool(
         (app['config'].redis_host, app['config'].redis_port))
-    setup_session(app, RedisStorage(app['redis']))
+    setup_session(app, RedisStorage(app['redis'], max_age=app['config'].session_timeout))
     app.router.add_route('GET', '/', hello)
 
     # app.on_shutdown.append(gw_shutdown)
@@ -75,7 +75,9 @@ async def server_main(loop, pidx, args):
               help='The hostname of a Redis server used for session storage.')
 @click.option('--redis-port', type=int, default=6379,
               help='The port number of the Redis server.')
-def main(service_ip, service_port, redis_host, redis_port):
+@click.option('--session-timeout', type=int, default=None,
+              help='The maximum age of web sessions in seconds.')
+def main(service_ip, service_port, redis_host, redis_port, session_timeout):
     setproctitle(f'backend.ai: console-server '
                  f'{service_ip}:{service_port}')
     logging.config.dictConfig({
@@ -121,6 +123,7 @@ def main(service_ip, service_port, redis_host, redis_port):
     config.service_port = service_port
     config.redis_host = redis_host
     config.redis_port = redis_port
+    config.session_timeout = session_timeout
     try:
         aiotools.start_server(
             server_main,
