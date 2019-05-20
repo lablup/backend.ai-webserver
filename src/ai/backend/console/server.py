@@ -15,6 +15,7 @@ from aiohttp_session.redis_storage import RedisStorage
 import aiotools
 import aioredis
 import click
+import jinja2
 from setproctitle import setproctitle
 import uvloop
 
@@ -28,15 +29,40 @@ static_path = Path(pkg_resources.resource_filename('ai.backend.console', 'static
 assert static_path.is_dir()
 
 
+console_config_template = jinja2.Template('''[general]
+apiEndpoint = {{endpoint_url}}
+apiEndpointText = {{endpoint_text}}
+defaultSessionEnvironment =
+siteDescription = {{site_description}}
+
+[proxy]
+proxyURL = {{proxy_url}}
+proxyBaseURL =
+proxyListenIP =
+''')
+
+
 async def console_handler(request: web.Request) -> web.Response:
-    file_path = (static_path / request.match_info['path']).resolve()
-    # TODO: generate config.ini
+    request_path = request.match_info['path']
+
+    if request_path == 'config.ini':
+        config_content = console_config_template.render(**{
+            'endpoint_url': '/func/',
+            'endpoint_text': 'Test Endpoint',
+            'site_description': 'TESTING',
+            'proxy_url': '',
+        })
+        return web.Response(text=config_content)
+
+    file_path = (static_path / request_path).resolve()
+    # SECURITY: only allow reading files under static_path
     try:
         file_path.relative_to(static_path)
-    except ValueError:
+    except (ValueError, FileNotFoundError):
         return web.HTTPNotFound()
     if file_path.is_file():
         return web.FileResponse(file_path)
+
     return web.FileResponse(static_path / 'index.html')
 
 
@@ -67,9 +93,9 @@ async def server_main(loop, pidx, args):
     setup_session(app, RedisStorage(app['redis'], max_age=app['config'].session_timeout))
     app.router.add_route('GET', '/login', login_handler)
     app.router.add_route('POST', '/login', login_handler)
-    app.router.add_route('GET', '/static/{path:.*$}', console_handler)
     app.router.add_route('GET', r'/func/stream/{path:.*$}', websocket_handler)
     app.router.add_route('*', r'/func/{path:.*$}', web_handler)
+    app.router.add_route('GET', '/{path:.*$}', console_handler)
 
     app.on_shutdown.append(server_shutdown)
     app.on_cleanup.append(server_cleanup)
