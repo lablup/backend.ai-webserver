@@ -17,6 +17,7 @@ import aioredis
 import click
 import jinja2
 from setproctitle import setproctitle
+import toml
 import uvloop
 
 from . import __version__
@@ -35,8 +36,8 @@ apiEndpointText = {{endpoint_text}}
 defaultSessionEnvironment =
 siteDescription = {{site_description}}
 
-[proxy]
-proxyURL = {{proxy_url}}
+[wsproxy]
+proxyURL = {{proxy_url}}/
 proxyBaseURL =
 proxyListenIP =
 ''')
@@ -44,13 +45,14 @@ proxyListenIP =
 
 async def console_handler(request: web.Request) -> web.Response:
     request_path = request.match_info['path']
+    config = request.app['config']
 
     if request_path == 'config.ini':
         config_content = console_config_template.render(**{
-            'endpoint_url': '/func/',
-            'endpoint_text': 'Test Endpoint',
-            'site_description': 'TESTING',
-            'proxy_url': '',
+            'endpoint_url': f'{request.scheme}://{request.host}/func',  # must be absolute
+            'endpoint_text': config['api']['text'],
+            'site_description': config['ui']['brand'],
+            'proxy_url': config['service']['wsproxy']['url'],
         })
         return web.Response(text=config_content)
 
@@ -68,11 +70,12 @@ async def console_handler(request: web.Request) -> web.Response:
 
 async def login_handler(request: web.Request) -> web.Response:
     session = await get_session(request)
-    if request.method == 'GET':
-        return web.Response(text='login form is here.')
-    elif request.method == 'POST':
-        # session['authenticated'] = True
-        return web.Response(text='not implemented yet')
+    if session['authenticated']:
+        return web.HTTPInvalidRequest('You have already logged in.')
+    creds = await request.json()
+    # TODO: implement
+    session['authenticated'] = True
+    return web.Response(text='not implemented yet')
 
 
 async def server_shutdown(app):
@@ -89,17 +92,13 @@ async def server_main(loop, pidx, args):
     app = web.Application()
     app['config'] = args[0]
     app['redis'] = await aioredis.create_pool(
-        (app['config'].redis_host, app['config'].redis_port))
-    setup_session(app, RedisStorage(app['redis'], max_age=app['config'].session_timeout))
-    app.router.add_route('GET', '/login', login_handler)
-    app.router.add_route('POST', '/login', login_handler)
-    app.router.add_route('GET', r'/func/stream/{path:.*$}', websocket_handler)
-    app.router.add_route('*', r'/func/{path:.*$}', web_handler)
-    app.router.add_route('GET', '/{path:.*$}', console_handler)
+        (app['config']['session']['redis']['host'],
+         app['config']['session']['redis']['port']))
+    redis_storage = RedisStorage(
+        app['redis'],
+        max_age=app['config']['session']['max_age'])
 
-    app.on_shutdown.append(server_shutdown)
-    app.on_cleanup.append(server_cleanup)
-
+    setup_session(app, redis_storage)
     cors_options = {
         '*': aiohttp_cors.ResourceOptions(
             allow_credentials=False,
@@ -107,12 +106,23 @@ async def server_main(loop, pidx, args):
     }
     cors = aiohttp_cors.setup(app, defaults=cors_options)
 
+    cors.add(app.router.add_route('POST', '/server/login', login_handler))
+    cors.add(app.router.add_route('GET', '/func/{path:stream/.*$}', websocket_handler))
+    cors.add(app.router.add_route('GET', '/func/{path:.*$}', web_handler))
+    cors.add(app.router.add_route('POST', '/func/{path:.*$}', web_handler))
+    cors.add(app.router.add_route('PATCH', '/func/{path:.*$}', web_handler))
+    cors.add(app.router.add_route('DELETE', '/func/{path:.*$}', web_handler))
+    cors.add(app.router.add_route('GET', '/{path:.*$}', console_handler))
+
+    app.on_shutdown.append(server_shutdown)
+    app.on_cleanup.append(server_cleanup)
+
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(
         runner,
-        str(app['config'].service_ip),
-        app['config'].service_port,
+        str(app['config']['service']['ip']),
+        app['config']['service']['port'],
         backlog=1024,
         reuse_port=True,
         # ssl_context=app['sslctx'],
@@ -128,17 +138,19 @@ async def server_main(loop, pidx, args):
 
 
 @click.command()
-@click.argument('service_ip')
-@click.argument('service_port')
-@click.option('--redis-host', default='localhost',
-              help='The hostname of a Redis server used for session storage.')
-@click.option('--redis-port', type=int, default=6379,
-              help='The port number of the Redis server.')
-@click.option('--session-timeout', type=int, default=None,
-              help='The maximum age of web sessions in seconds.')
-def main(service_ip, service_port, redis_host, redis_port, session_timeout):
-    setproctitle(f'backend.ai: console-server '
-                 f'{service_ip}:{service_port}')
+@click.option('-f', '--config', type=click.Path(exists=True),
+              default='console-server.conf',
+              help='The configuration file to use.')
+@click.option('--debug', is_flag=True,
+              default=False,
+              help='Use more verbose logging.')
+def main(config, debug):
+    config = toml.loads(Path(config).read_text(encoding='utf-8'))
+    config['debug'] = debug
+
+    setproctitle(f"backend.ai: console-server "
+                 f"{config['service']['ip']}:{config['service']['port']}")
+
     logging.config.dictConfig({
         'version': 1,
         'disable_existing_loggers': False,
@@ -177,12 +189,6 @@ def main(service_ip, service_port, redis_host, redis_port, session_timeout):
     log_config.debug('debug mode enabled.')
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     
-    config = SimpleNamespace()
-    config.service_ip = service_ip
-    config.service_port = service_port
-    config.redis_host = redis_host
-    config.redis_port = redis_port
-    config.session_timeout = session_timeout
     try:
         aiotools.start_server(
             server_main,

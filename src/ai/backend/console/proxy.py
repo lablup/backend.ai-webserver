@@ -1,15 +1,17 @@
 import asyncio
+import logging
+import json
 
 import aiohttp
-from aiohttp import web
+from aiohttp import hdrs, web
 
 from ai.backend.client.exceptions import BackendAPIError, BackendClientError
 from ai.backend.client.request import Request
 
 from .auth import get_api_session
+from .logging import BraceStyleAdapter
 
-
-PROXY_PREFIX = '/func/'
+log = BraceStyleAdapter(logging.getLogger('ai.backend.console.proxy'))
 
 
 class WebSocketProxy:
@@ -98,13 +100,15 @@ class WebSocketProxy:
 
 
 async def web_handler(request):
-    api_session = await get_api_session(request)
-    path = request.path[len(PROXY_PREFIX):]
+    path = request.match_info['path']
+    api_session = await asyncio.shield(get_api_session(request))
     try:
         # We treat all requests and responses as streaming universally
         # to be a transparent proxy.
+        params = request.query if request.query else None
         api_rqst = Request(
             api_session, request.method, path, request.content,
+            params=params,
             content_type=request.content_type)
         # Uploading request body happens at the entering of the block,
         # and downloading response body happens in the read loop inside.
@@ -112,7 +116,8 @@ async def web_handler(request):
             down_resp = web.StreamResponse()
             down_resp.set_status(up_resp.status, up_resp.reason)
             down_resp.headers.update(up_resp.headers)
-            down_resp.headers['Access-Control-Allow-Origin'] = '*'
+            # We already have configured CORS handlers and the API server
+            # also provides those headers.  Just let them as-is.
             await down_resp.prepare(request)
             while True:
                 chunk = await up_resp.aread(8192)
@@ -124,29 +129,31 @@ async def web_handler(request):
         return web.Response(body=json.dumps(e.data),
                             status=e.status, reason=e.reason)
     except BackendClientError:
+        log.exception('websocket_handler: BackendClientError')
         return web.Response(
             body="The proxy target server is inaccessible.",
             status=502,
             reason="Bad Gateway")
     except asyncio.CancelledError:
-        return web.Response(
-            body="The proxy is being shut down.",
-            status=503,
-            reason="Service Unavailable")
+        raise
     except Exception as e:
-        print_error(e)
+        log.exception('web_handler: unexpected error')
         return web.Response(
             body="Something has gone wrong.",
             status=500,
             reason="Internal Server Error")
+    finally:
+        await api_session.close()
 
 
 async def websocket_handler(request):
-    api_session = await get_api_session_from_request(request)
-    path = request.path[len(PROXY_PREFIX):]
+    path = request.match_info['path']
+    api_session = await asyncio.shield(get_api_session(request))
     try:
+        params = request.query if request.query else None
         api_rqst = Request(
             api_session, request.method, path, request.content,
+            params=params,
             content_type=request.content_type)
         async with api_rqst.connect_websocket() as up_conn:
             down_conn = web.WebSocketResponse()
@@ -158,18 +165,18 @@ async def websocket_handler(request):
         return web.Response(body=json.dumps(e.data),
                             status=e.status, reason=e.reason)
     except BackendClientError:
+        log.exception('websocket_handler: BackendClientError')
         return web.Response(
             body="The proxy target server is inaccessible.",
             status=502,
             reason="Bad Gateway")
     except asyncio.CancelledError:
-        return web.Response(
-            body="The proxy is being shut down.",
-            status=503,
-            reason="Service Unavailable")
+        raise
     except Exception as e:
-        print_error(e)
+        log.exception('websocket_handler: unexpected error')
         return web.Response(
             body="Something has gone wrong.",
             status=500,
             reason="Internal Server Error")
+    finally:
+        await api_session.close()
