@@ -2,9 +2,11 @@ import asyncio
 import logging
 import logging.config
 import os
+from pathlib import Path
 import sys
 import time
 from types import SimpleNamespace
+import pkg_resources
 
 from aiohttp import web
 import aiohttp_cors
@@ -18,15 +20,42 @@ import uvloop
 
 from . import __version__
 from .logging import BraceStyleAdapter
+from .proxy import web_handler, websocket_handler
 
 log = BraceStyleAdapter(logging.getLogger('ai.backend.console.server'))
 
+static_path = Path(pkg_resources.resource_filename('ai.backend.console', 'static')).resolve()
+assert static_path.is_dir()
 
-async def hello(request: web.Request) -> web.Response:
+
+async def console_handler(request: web.Request) -> web.Response:
+    file_path = (static_path / request.match_info['path']).resolve()
+    # TODO: generate config.ini
+    try:
+        file_path.relative_to(static_path)
+    except ValueError:
+        return web.HTTPNotFound()
+    if file_path.is_file():
+        return web.FileResponse(file_path)
+    return web.FileResponse(static_path / 'index.html')
+
+
+async def login_handler(request: web.Request) -> web.Response:
     session = await get_session(request)
-    if 'first_visit' not in session:
-        session['first_visit'] = time.time()
-    return web.Response(body=f"OK (your first visit: {session['first_visit']}")
+    if request.method == 'GET':
+        return web.Response(text='login form is here.')
+    elif request.method == 'POST':
+        # session['authenticated'] = True
+        return web.Response(text='not implemented yet')
+
+
+async def server_shutdown(app):
+    pass
+
+
+async def server_cleanup(app):
+    app['redis'].close()
+    await app['redis'].wait_closed()
 
 
 @aiotools.server
@@ -36,10 +65,14 @@ async def server_main(loop, pidx, args):
     app['redis'] = await aioredis.create_pool(
         (app['config'].redis_host, app['config'].redis_port))
     setup_session(app, RedisStorage(app['redis'], max_age=app['config'].session_timeout))
-    app.router.add_route('GET', '/', hello)
+    app.router.add_route('GET', '/login', login_handler)
+    app.router.add_route('POST', '/login', login_handler)
+    app.router.add_route('GET', '/static/{path:.*$}', console_handler)
+    app.router.add_route('GET', r'/func/stream/{path:.*$}', websocket_handler)
+    app.router.add_route('*', r'/func/{path:.*$}', web_handler)
 
-    # app.on_shutdown.append(gw_shutdown)
-    # app.on_cleanup.append(gw_cleanup)
+    app.on_shutdown.append(server_shutdown)
+    app.on_cleanup.append(server_cleanup)
 
     cors_options = {
         '*': aiohttp_cors.ResourceOptions(
