@@ -29,7 +29,7 @@ files for the requested URL path).
 The PWA must exclude `/server` and `/func` URL prefixes from its own routing
 to work with the console server's web sessions and the API proxy.
 
-If it is set "other", the console server serves the static files as-is,
+If it is set "static", the console server serves the static files as-is,
 without any fallbacks or hooking, while preserving the `/server` and `/func`
 prefixed URLs and their functionalities.
 

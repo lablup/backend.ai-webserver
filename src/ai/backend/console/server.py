@@ -150,8 +150,10 @@ async def server_main(loop, pidx, args):
     cors.add(app.router.add_route('DELETE', '/func/{path:.*$}', web_handler))
     if config['service']['mode'] == 'webconsole':
         fallback_handler = console_handler
-    else:
+    elif config['service']['mode'] == 'static':
         fallback_handler = static_handler
+    else:
+        raise ValueError('Unrecognized service.mode', config['service']['mode'])
     cors.add(app.router.add_route('GET', '/{path:.*$}', fallback_handler))
 
     app.on_shutdown.append(server_shutdown)
