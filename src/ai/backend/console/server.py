@@ -43,8 +43,21 @@ proxyListenIP =
 ''')
 
 
+async def static_handler(request: web.Request) -> web.Response:
+    request_path = request.match_info['path']
+    file_path = (static_path / request_path).resolve()
+    try:
+        file_path.relative_to(static_path)
+    except (ValueError, FileNotFoundError):
+        return web.HTTPNotFound()
+    if file_path.is_file():
+        return web.FileResponse(file_path)
+    return web.HTTPNotFound()
+
+
 async def console_handler(request: web.Request) -> web.Response:
     request_path = request.match_info['path']
+    file_path = (static_path / request_path).resolve()
     config = request.app['config']
 
     if request_path == 'config.ini':
@@ -56,7 +69,6 @@ async def console_handler(request: web.Request) -> web.Response:
         })
         return web.Response(text=config_content)
 
-    file_path = (static_path / request_path).resolve()
     # SECURITY: only allow reading files under static_path
     try:
         file_path.relative_to(static_path)
@@ -68,6 +80,13 @@ async def console_handler(request: web.Request) -> web.Response:
     return web.FileResponse(static_path / 'index.html')
 
 
+async def login_check_handler(request: web.Request) -> web.Response:
+    session = await get_session(request)
+    return web.json_response({
+        'authenticated': bool(session['authenticated'])
+    })
+
+
 async def login_handler(request: web.Request) -> web.Response:
     session = await get_session(request)
     if session['authenticated']:
@@ -75,7 +94,15 @@ async def login_handler(request: web.Request) -> web.Response:
     creds = await request.json()
     # TODO: implement
     session['authenticated'] = True
-    return web.Response(text='not implemented yet')
+    return web.json_response({
+        'authenticated': bool(session['authenticated']),
+    })
+
+
+async def logout_handler(request: web.Request) -> web.Response:
+    session = await get_session(request)
+    # delete session
+    return web.Response(status=201)
 
 
 async def server_shutdown(app):
@@ -114,12 +141,18 @@ async def server_main(loop, pidx, args):
     cors = aiohttp_cors.setup(app, defaults=cors_options)
 
     cors.add(app.router.add_route('POST', '/server/login', login_handler))
+    cors.add(app.router.add_route('POST', '/server/login-check', login_check_handler))
+    cors.add(app.router.add_route('POST', '/server/logout', logout_handler))
     cors.add(app.router.add_route('GET', '/func/{path:stream/.*$}', websocket_handler))
     cors.add(app.router.add_route('GET', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('POST', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('PATCH', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('DELETE', '/func/{path:.*$}', web_handler))
-    cors.add(app.router.add_route('GET', '/{path:.*$}', console_handler))
+    if config['service']['mode'] == 'webconsole':
+        fallback_handler = console_handler
+    else:
+        fallback_handler = static_handler
+    cors.add(app.router.add_route('GET', '/{path:.*$}', fallback_handler))
 
     app.on_shutdown.append(server_shutdown)
     app.on_cleanup.append(server_cleanup)
