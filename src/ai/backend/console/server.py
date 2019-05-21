@@ -89,14 +89,21 @@ async def server_cleanup(app):
 
 @aiotools.server
 async def server_main(loop, pidx, args):
+    config = args[0]
     app = web.Application()
-    app['config'] = args[0]
+    app['config'] = config
     app['redis'] = await aioredis.create_pool(
-        (app['config']['session']['redis']['host'],
-         app['config']['session']['redis']['port']))
+        (config['session']['redis']['host'],
+         config['session']['redis']['port']),
+        db=config['session']['redis'].get('db', 0),
+        password=config['session']['redis'].get('password', None))
+
+    if pidx == 0 and config['session'].get('flush_on_startup', False):
+        await app['redis'].execute('flushdb')
+        log.info('flushed session storage.')
     redis_storage = RedisStorage(
         app['redis'],
-        max_age=app['config']['session']['max_age'])
+        max_age=config['session']['max_age'])
 
     setup_session(app, redis_storage)
     cors_options = {
@@ -121,8 +128,8 @@ async def server_main(loop, pidx, args):
     await runner.setup()
     site = web.TCPSite(
         runner,
-        str(app['config']['service']['ip']),
-        app['config']['service']['port'],
+        str(config['service']['ip']),
+        config['service']['port'],
         backlog=1024,
         reuse_port=True,
         # ssl_context=app['sslctx'],
