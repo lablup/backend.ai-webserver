@@ -21,6 +21,18 @@ You don't have to write `config.ini` for the console as this console server auto
 
 Edit `console-server.conf` to match with your environment.
 
+## Mode
+
+If `service.mode` is set "webconsole" (the default), the console server handles
+PWA-style fallbacks (e.g., serving `index.html` when there are no matching
+files for the requested URL path).
+The PWA must exclude `/server` and `/func` URL prefixes from its own routing
+to work with the console server's web sessions and the API proxy.
+
+If it is set "other", the console server serves the static files as-is,
+without any fallbacks or hooking, while preserving the `/server` and `/func`
+prefixed URLs and their functionalities.
+
 ## Usage
 
 ```console
