@@ -5,7 +5,7 @@ A minimal webapp to convert web session requests to API requests
 
 ## Installation
 
-Prepare a Python virtualenv (Python 3.7 or higher) and a Redis server.
+Prepare a Python virtualenv (Python 3.7 or higher) and a Redis server (5.0 or higher).
 
 ```console
 $ git clone https://github.com/lablup/backend.ai-console-server console-server
