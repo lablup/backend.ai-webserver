@@ -83,13 +83,13 @@ async def console_handler(request: web.Request) -> web.Response:
 async def login_check_handler(request: web.Request) -> web.Response:
     session = await get_session(request)
     return web.json_response({
-        'authenticated': bool(session['authenticated'])
+        'authenticated': bool(session.get('authenticated', False))
     })
 
 
 async def login_handler(request: web.Request) -> web.Response:
     session = await get_session(request)
-    if session['authenticated']:
+    if session.get('authenticated', False):
         return web.HTTPInvalidRequest('You have already logged in.')
     creds = await request.json()
     # TODO: implement
@@ -101,7 +101,7 @@ async def login_handler(request: web.Request) -> web.Response:
 
 async def logout_handler(request: web.Request) -> web.Response:
     session = await get_session(request)
-    # delete session
+    session.invalidate()
     return web.Response(status=201)
 
 
