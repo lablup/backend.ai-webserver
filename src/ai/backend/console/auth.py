@@ -2,7 +2,7 @@ from aiohttp import web
 from aiohttp_session import get_session
 
 from ai.backend.client.session import AsyncSession as APISession
-from ai.backend.client.config import APIConfig, get_config
+from ai.backend.client.config import APIConfig
 
 from . import __version__
 

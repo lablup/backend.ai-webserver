@@ -4,8 +4,6 @@ import logging.config
 import os
 from pathlib import Path
 import sys
-import time
-from types import SimpleNamespace
 import pkg_resources
 
 from aiohttp import web
@@ -231,7 +229,7 @@ def main(config, debug):
     log_config = logging.getLogger('ai.backend.console.config')
     log_config.debug('debug mode enabled.')
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-    
+
     try:
         aiotools.start_server(
             server_main,

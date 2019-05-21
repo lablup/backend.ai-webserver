@@ -3,7 +3,7 @@ import logging
 import json
 
 import aiohttp
-from aiohttp import hdrs, web
+from aiohttp import web
 
 from ai.backend.client.exceptions import BackendAPIError, BackendClientError
 from ai.backend.client.request import Request
@@ -37,8 +37,8 @@ class WebSocketProxy:
                 if msg.type in (aiohttp.WSMsgType.TEXT, aiohttp.WSMsgType.BINARY):
                     await self.send(msg.data, msg.type)
                 elif msg.type == aiohttp.WSMsgType.ERROR:
-                    print_fail("ws connection closed with exception {}"
-                               .format(self.up_conn.exception()))
+                    log.error("WebSocketProxy: connection closed with exception {}",
+                              self.up_conn.exception())
                     break
                 elif msg.type == aiohttp.WSMsgType.CLOSE:
                     break
@@ -53,7 +53,6 @@ class WebSocketProxy:
         try:
             self.upstream_buffer_task = \
                     asyncio.ensure_future(self.consume_upstream_buffer())
-            print_info("websocket proxy started")
             async for msg in self.up_conn:
                 if msg.type == aiohttp.WSMsgType.TEXT:
                     await self.down_conn.send_str(msg.data)
@@ -67,10 +66,9 @@ class WebSocketProxy:
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            print_fail('unexpected error: {}'.format(e))
+            log.error('WebSocketProxy: unexpected error: {}', e)
         finally:
             await self.close_upstream()
-            print_info("websocket proxy termianted")
 
     async def consume_upstream_buffer(self):
         try:
@@ -136,7 +134,7 @@ async def web_handler(request):
             reason="Bad Gateway")
     except asyncio.CancelledError:
         raise
-    except Exception as e:
+    except Exception:
         log.exception('web_handler: unexpected error')
         return web.Response(
             body="Something has gone wrong.",
@@ -172,7 +170,7 @@ async def websocket_handler(request):
             reason="Bad Gateway")
     except asyncio.CancelledError:
         raise
-    except Exception as e:
+    except Exception:
         log.exception('websocket_handler: unexpected error')
         return web.Response(
             body="Something has gone wrong.",
