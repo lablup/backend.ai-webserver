@@ -21,7 +21,7 @@ async def get_api_session(request: web.Request) -> web.Response:
 
     config = APIConfig(
         # TODO: add domain argument to client-py
-        endpoint='http://localhost:8081',
+        endpoint=config['api']['endpoint'],
         access_key='AKIAIOSFODNN7EXAMPLE',
         secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
         user_agent=f'Backend.AI Console Server {__version__}',
