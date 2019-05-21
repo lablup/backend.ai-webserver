@@ -145,6 +145,7 @@ async def server_main(loop, pidx, args):
     cors.add(app.router.add_route('POST', '/server/logout', logout_handler))
     cors.add(app.router.add_route('GET', '/func/{path:stream/.*$}', websocket_handler))
     cors.add(app.router.add_route('GET', '/func/{path:.*$}', web_handler))
+    cors.add(app.router.add_route('PUT', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('POST', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('PATCH', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('DELETE', '/func/{path:.*$}', web_handler))
