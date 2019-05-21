@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import logging.config
 import os
@@ -12,11 +13,16 @@ from aiohttp_session import get_session, setup as setup_session
 from aiohttp_session.redis_storage import RedisStorage
 import aiotools
 import aioredis
+import attr
 import click
 import jinja2
 from setproctitle import setproctitle
 import toml
 import uvloop
+
+from ai.backend.client.config import APIConfig
+from ai.backend.client.exceptions import BackendError
+from ai.backend.client.session import AsyncSession as APISession
 
 from . import __version__
 from .logging import BraceStyleAdapter
@@ -41,7 +47,7 @@ proxyListenIP =
 ''')
 
 
-async def static_handler(request: web.Request) -> web.Response:
+async def static_handler(request: web.Request) -> web.StreamResponse:
     request_path = request.match_info['path']
     file_path = (static_path / request_path).resolve()
     try:
@@ -53,7 +59,7 @@ async def static_handler(request: web.Request) -> web.Response:
     return web.HTTPNotFound()
 
 
-async def console_handler(request: web.Request) -> web.Response:
+async def console_handler(request: web.Request) -> web.StreamResponse:
     request_path = request.match_info['path']
     file_path = (static_path / request_path).resolve()
     config = request.app['config']
@@ -86,14 +92,33 @@ async def login_check_handler(request: web.Request) -> web.Response:
 
 
 async def login_handler(request: web.Request) -> web.Response:
+    config = request.app['config']
     session = await get_session(request)
     if session.get('authenticated', False):
-        return web.HTTPInvalidRequest('You have already logged in.')
+        return web.HTTPBadRequest(text='You have already logged in.')
     creds = await request.json()
-    # TODO: implement
-    session['authenticated'] = True
+    if 'username' not in creds:
+        raise web.HTTPBadRequest(text='You must provide the username field.')
+    if 'password' not in creds:
+        raise web.HTTPBadRequest(text='You must provide the password field.')
+    try:
+        anon_api_config = APIConfig(
+            domain=config['api']['domain'],
+            endpoint=config['api']['endpoint'],
+            access_key='', secret_key='',  # anonymous session
+            user_agent=f'Backend.AI Console Server {__version__}',
+        )
+        assert anon_api_config.is_anonymous
+        async with APISession(anon_api_config) as api_session:
+            token = await api_session.KeyPair.authorize(creds['username'], creds['password'])
+            session['token'] = json.dumps(attr.asdict(token))
+            success = True
+    except BackendError as e:
+        log.info('Authorization failed for {}: {}', creds['username'], e)
+        success = False
+    session['authenticated'] = success
     return web.json_response({
-        'authenticated': bool(session['authenticated']),
+        'authenticated': success,
     })
 
 

@@ -1,3 +1,5 @@
+import json
+
 from aiohttp import web
 from aiohttp_session import get_session
 
@@ -7,23 +9,20 @@ from ai.backend.client.config import APIConfig
 from . import __version__
 
 
-async def get_api_session(request: web.Request) -> web.Response:
+async def get_api_session(request: web.Request) -> APISession:
     config = request.app['config']
     session = await get_session(request)
-    authenticated = session.get('authenticated', False)
-    # if not authenticated:
-    #     return web.HTTPFound('/login')
-    if 'access_key' not in session:
-        pass
-        # session['user_id']
-        # session['password']
-        # TODO: query the manager from user credential
-
+    if 'token' not in session:
+        raise web.HTTPUnauthorized()
+    token = json.loads(session['token'])
+    if token['type'] != 'keypair':
+        raise web.HTTPInternalServerError(text='Incompatible auth token.')
+    ak, sk = token['content'].split(':', maxsplit=1)
     config = APIConfig(
-        # TODO: add domain argument to client-py
+        domain=config['api']['domain'],
         endpoint=config['api']['endpoint'],
-        access_key='AKIAIOSFODNN7EXAMPLE',
-        secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+        access_key=ak,
+        secret_key=sk,
         user_agent=f'Backend.AI Console Server {__version__}',
     )
     return APISession(config=config)
