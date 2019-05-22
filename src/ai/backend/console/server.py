@@ -101,6 +101,10 @@ async def login_handler(request: web.Request) -> web.Response:
         raise web.HTTPBadRequest(text='You must provide the username field.')
     if 'password' not in creds:
         raise web.HTTPBadRequest(text='You must provide the password field.')
+    result = {
+        'authenticated': False,
+        'data': None,
+    }
     try:
         anon_api_config = APIConfig(
             domain=config['api']['domain'],
@@ -109,17 +113,26 @@ async def login_handler(request: web.Request) -> web.Response:
             user_agent=f'Backend.AI Console Server {__version__}',
         )
         assert anon_api_config.is_anonymous
-        async with APISession(anon_api_config) as api_session:
-            token = await api_session.KeyPair.authorize(creds['username'], creds['password'])
-            session['token'] = json.dumps(attr.asdict(token))
-            success = True
+        async with APISession(config=anon_api_config) as api_session:
+            token = await api_session.User.authorize(creds['username'], creds['password'])
+            stored_token = {
+                'access_key': token.content['access_key'],
+                'secret_key': token.content['secret_key'],
+                'role': token.content['role'],
+            }
+            public_return = {
+                'access_key': token.content['access_key'],
+                'role': token.content['role'],
+            }
+            session['authenticated'] = True
+            session['token'] = stored_token  # store full token
+            result['authenticated'] = True
+            result['data'] = public_return  # store public info from token
     except BackendError as e:
         log.info('Authorization failed for {}: {}', creds['username'], e)
-        success = False
-    session['authenticated'] = success
-    return web.json_response({
-        'authenticated': success,
-    })
+        result['authenticated'] = False
+        session['authenticated'] = False
+    return web.json_response(result)
 
 
 async def logout_handler(request: web.Request) -> web.Response:
