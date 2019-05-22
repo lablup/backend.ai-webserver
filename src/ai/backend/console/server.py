@@ -86,8 +86,17 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
 
 async def login_check_handler(request: web.Request) -> web.Response:
     session = await get_session(request)
+    authenticated = bool(session.get('authenticated', False))
+    public_data = None
+    if authenticated:
+        stored_token = session['token']
+        public_data = {
+            'access_key': stored_token['access_key'],
+            'role': stored_token['role'],
+        }
     return web.json_response({
-        'authenticated': bool(session.get('authenticated', False))
+        'authenticated': authenticated,
+        'data': public_data,
     })
 
 
