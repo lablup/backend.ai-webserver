@@ -1,9 +1,9 @@
 import asyncio
-import json
 import logging
 import logging.config
 import os
 from pathlib import Path
+from typing import Any, MutableMapping
 import sys
 import pkg_resources
 
@@ -13,7 +13,6 @@ from aiohttp_session import get_session, setup as setup_session
 from aiohttp_session.redis_storage import RedisStorage
 import aiotools
 import aioredis
-import attr
 import click
 import jinja2
 from setproctitle import setproctitle
@@ -110,7 +109,7 @@ async def login_handler(request: web.Request) -> web.Response:
         raise web.HTTPBadRequest(text='You must provide the username field.')
     if 'password' not in creds:
         raise web.HTTPBadRequest(text='You must provide the password field.')
-    result = {
+    result: MutableMapping[str, Any] = {
         'authenticated': False,
         'data': None,
     }
@@ -180,7 +179,7 @@ async def server_main(loop, pidx, args):
     setup_session(app, redis_storage)
     cors_options = {
         '*': aiohttp_cors.ResourceOptions(
-            allow_credentials=False,
+            allow_credentials=True,
             expose_headers="*", allow_headers="*"),
     }
     cors = aiohttp_cors.setup(app, defaults=cors_options)
