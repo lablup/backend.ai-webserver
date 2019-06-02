@@ -180,7 +180,9 @@ async def server_main(loop, pidx, args):
     cors_options = {
         '*': aiohttp_cors.ResourceOptions(
             allow_credentials=True,
-            expose_headers="*", allow_headers="*"),
+            allow_methods='*',
+            expose_headers="*",
+            allow_headers="*"),
     }
     cors = aiohttp_cors.setup(app, defaults=cors_options)
 
