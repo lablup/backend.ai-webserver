@@ -124,6 +124,7 @@ async def login_handler(request: web.Request) -> web.Response:
         async with APISession(config=anon_api_config) as api_session:
             token = await api_session.User.authorize(creds['username'], creds['password'])
             stored_token = {
+                'type': 'keypair',
                 'access_key': token.content['access_key'],
                 'secret_key': token.content['secret_key'],
                 'role': token.content['role'],

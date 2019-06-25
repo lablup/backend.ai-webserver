@@ -12,12 +12,14 @@ from . import __version__
 async def get_api_session(request: web.Request) -> APISession:
     config = request.app['config']
     session = await get_session(request)
+    if not session.get('authenticated', False):
+        raise web.HTTPUnauthorized()
     if 'token' not in session:
         raise web.HTTPUnauthorized()
-    token = json.loads(session['token'])
+    token = session['token']
     if token['type'] != 'keypair':
         raise web.HTTPInternalServerError(text='Incompatible auth token.')
-    ak, sk = token['content'].split(':', maxsplit=1)
+    ak, sk = token['access_key'], token['secret_key']
     config = APIConfig(
         domain=config['api']['domain'],
         endpoint=config['api']['endpoint'],
