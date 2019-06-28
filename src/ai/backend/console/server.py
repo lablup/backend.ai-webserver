@@ -39,6 +39,7 @@ apiEndpoint = {{endpoint_url}}
 apiEndpointText = {{endpoint_text}}
 defaultSessionEnvironment =
 siteDescription = {{site_description}}
+connectionMode = SESSION
 
 [wsproxy]
 proxyURL = {{proxy_url}}/
