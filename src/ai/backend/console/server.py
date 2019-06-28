@@ -67,7 +67,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
 
     if request_path == 'config.ini':
         config_content = console_config_template.render(**{
-            'endpoint_url': f'{request.scheme}://{request.host}/func',  # must be absolute
+            'endpoint_url': f'{request.scheme}://{request.host}',  # must be absolute
             'endpoint_text': config['api']['text'],
             'site_description': config['ui']['brand'],
             'proxy_url': config['service']['wsproxy']['url'],
