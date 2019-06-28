@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, MutableMapping
 import sys
 import pkg_resources
+import ssl
 
 from aiohttp import web
 import aiohttp_cors
@@ -207,6 +208,14 @@ async def server_main(loop, pidx, args):
     app.on_shutdown.append(server_shutdown)
     app.on_cleanup.append(server_cleanup)
 
+    ssl_ctx = None
+    if config['service']['ssl-enabled']:
+        ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        ssl_ctx.load_cert_chain(
+            str(config['service']['ssl-cert']),
+            str(config['service']['ssl-privkey']),
+        )
+
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(
@@ -215,7 +224,7 @@ async def server_main(loop, pidx, args):
         config['service']['port'],
         backlog=1024,
         reuse_port=True,
-        # ssl_context=app['sslctx'],
+        ssl_context=ssl_ctx,
     )
     await site.start()
     log.info('started.')
