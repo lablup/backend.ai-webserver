@@ -210,7 +210,7 @@ async def server_main(loop, pidx, args):
     app.on_cleanup.append(server_cleanup)
 
     ssl_ctx = None
-    if config['service']['ssl-enabled']:
+    if 'ssl-enabled' in config['service'] and config['service']['ssl-enabled']:
         ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         ssl_ctx.load_cert_chain(
             str(config['service']['ssl-cert']),
