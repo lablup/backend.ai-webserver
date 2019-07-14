@@ -8,7 +8,7 @@ from aiohttp import web
 from ai.backend.client.exceptions import BackendAPIError, BackendClientError
 from ai.backend.client.request import Request
 
-from .auth import get_api_session
+from .auth import get_api_session, get_anonymous_session
 from .logging import BraceStyleAdapter
 
 log = BraceStyleAdapter(logging.getLogger('ai.backend.console.proxy'))
@@ -100,6 +100,53 @@ class WebSocketProxy:
 async def web_handler(request):
     path = request.match_info['path']
     api_session = await asyncio.shield(get_api_session(request))
+    try:
+        # We treat all requests and responses as streaming universally
+        # to be a transparent proxy.
+        params = request.query if request.query else None
+        api_rqst = Request(
+            api_session, request.method, path, request.content,
+            params=params,
+            content_type=request.content_type)
+        # Uploading request body happens at the entering of the block,
+        # and downloading response body happens in the read loop inside.
+        async with api_rqst.fetch() as up_resp:
+            down_resp = web.StreamResponse()
+            down_resp.set_status(up_resp.status, up_resp.reason)
+            down_resp.headers.update(up_resp.headers)
+            # We already have configured CORS handlers and the API server
+            # also provides those headers.  Just let them as-is.
+            await down_resp.prepare(request)
+            while True:
+                chunk = await up_resp.aread(8192)
+                if not chunk:
+                    break
+                await down_resp.write(chunk)
+            return down_resp
+    except BackendAPIError as e:
+        return web.Response(body=json.dumps(e.data),
+                            status=e.status, reason=e.reason)
+    except BackendClientError:
+        log.exception('websocket_handler: BackendClientError')
+        return web.Response(
+            body="The proxy target server is inaccessible.",
+            status=502,
+            reason="Bad Gateway")
+    except asyncio.CancelledError:
+        raise
+    except Exception:
+        log.exception('web_handler: unexpected error')
+        return web.Response(
+            body="Something has gone wrong.",
+            status=500,
+            reason="Internal Server Error")
+    finally:
+        await api_session.close()
+
+
+async def web_plugin_handler(request):
+    path = request.match_info['path']
+    api_session = await asyncio.shield(get_anonymous_session(request))
     try:
         # We treat all requests and responses as streaming universally
         # to be a transparent proxy.

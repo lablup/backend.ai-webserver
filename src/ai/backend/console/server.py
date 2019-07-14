@@ -26,7 +26,7 @@ from ai.backend.client.session import AsyncSession as APISession
 
 from . import __version__
 from .logging import BraceStyleAdapter
-from .proxy import web_handler, websocket_handler
+from .proxy import web_handler, websocket_handler, web_plugin_handler
 
 log = BraceStyleAdapter(logging.getLogger('ai.backend.console.server'))
 
@@ -192,6 +192,7 @@ async def server_main(loop, pidx, args):
     cors.add(app.router.add_route('POST', '/server/login', login_handler))
     cors.add(app.router.add_route('POST', '/server/login-check', login_check_handler))
     cors.add(app.router.add_route('POST', '/server/logout', logout_handler))
+    cors.add(app.router.add_route('GET', '/func/{path:hanati/user}', web_plugin_handler))
     cors.add(app.router.add_route('GET', '/func/{path:stream/.*$}', websocket_handler))
     cors.add(app.router.add_route('GET', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('PUT', '/func/{path:.*$}', web_handler))

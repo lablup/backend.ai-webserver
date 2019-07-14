@@ -28,3 +28,15 @@ async def get_api_session(request: web.Request) -> APISession:
         user_agent=f'Backend.AI Console Server {__version__}',
     )
     return APISession(config=config)
+
+async def get_anonymous_session(request: web.Request) -> APISession:
+    config = request.app['config']
+    session = await get_session(request)
+    config = APIConfig(
+        domain=config['api']['domain'],
+        endpoint=config['api']['endpoint'],
+        access_key='',
+        secret_key='',
+        user_agent=f'Backend.AI Console Server {__version__}',
+    )
+    return APISession(config=config)
