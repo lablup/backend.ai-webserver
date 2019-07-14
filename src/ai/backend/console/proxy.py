@@ -150,7 +150,7 @@ async def web_plugin_handler(request):
     try:
         # We treat all requests and responses as streaming universally
         # to be a transparent proxy.
-        params = request.query if request.query else {}
+        params = dict(request.query) if request.query else {}
         content = request.content
         if path == 'hanati/user':
             params['domain'] = request.app['config']['api']['domain']
