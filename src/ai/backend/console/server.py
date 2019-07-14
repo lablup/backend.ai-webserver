@@ -289,9 +289,9 @@ def main(config, debug):
     log.info('runtime: {0}', sys.prefix)
     log_config = logging.getLogger('ai.backend.console.config')
     log_config.debug('debug mode enabled.')
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
     try:
+        uvloop.install()
         aiotools.start_server(
             server_main,
             num_workers=min(4, os.cpu_count()),
