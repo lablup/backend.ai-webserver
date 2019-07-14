@@ -152,11 +152,9 @@ async def web_plugin_handler(request):
         # to be a transparent proxy.
         params = dict(request.query) if request.query else {}
         content = request.content
-        if path == 'hanati/user':
-            params['domain'] = request.app['config']['api']['domain']
         if path == 'auth/signup':
             body = await request.json()
-            body['domain'] = request.app['config']['api']['domin']
+            body['domain'] = request.app['config']['api']['domain']
             content = json.dumps(body).encode('utf8')
         api_rqst = Request(
             api_session, request.method, path, content,
