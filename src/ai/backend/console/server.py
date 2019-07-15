@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import logging.config
 import os
@@ -24,7 +23,7 @@ from ai.backend.client.config import APIConfig
 from ai.backend.client.exceptions import BackendError
 from ai.backend.client.session import AsyncSession as APISession
 
-from . import __version__
+from . import __version__, user_agent
 from .logging import BraceStyleAdapter
 from .proxy import web_handler, websocket_handler, web_plugin_handler
 
@@ -120,7 +119,8 @@ async def login_handler(request: web.Request) -> web.Response:
             domain=config['api']['domain'],
             endpoint=config['api']['endpoint'],
             access_key='', secret_key='',  # anonymous session
-            user_agent=f'Backend.AI Console Server {__version__}',
+            user_agent=user_agent,
+            skip_sslcert_validation=config['api'].get('ssl-verify', True),
         )
         assert anon_api_config.is_anonymous
         async with APISession(config=anon_api_config) as api_session:

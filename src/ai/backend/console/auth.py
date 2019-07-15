@@ -1,12 +1,10 @@
-import json
-
 from aiohttp import web
 from aiohttp_session import get_session
 
 from ai.backend.client.session import AsyncSession as APISession
 from ai.backend.client.config import APIConfig
 
-from . import __version__
+from . import user_agent
 
 
 async def get_api_session(request: web.Request) -> APISession:
@@ -25,18 +23,20 @@ async def get_api_session(request: web.Request) -> APISession:
         endpoint=config['api']['endpoint'],
         access_key=ak,
         secret_key=sk,
-        user_agent=f'Backend.AI Console Server {__version__}',
+        user_agent=user_agent,
+        skip_sslcert_validation=config['api'].get('ssl-verify', True),
     )
     return APISession(config=config)
 
+
 async def get_anonymous_session(request: web.Request) -> APISession:
     config = request.app['config']
-    session = await get_session(request)
     config = APIConfig(
         domain=config['api']['domain'],
         endpoint=config['api']['endpoint'],
         access_key='',
         secret_key='',
-        user_agent=f'Backend.AI Console Server {__version__}',
+        user_agent=user_agent,
+        skip_sslcert_validation=config['api'].get('ssl-verify', True),
     )
     return APISession(config=config)
