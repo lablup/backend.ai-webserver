@@ -84,21 +84,25 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
 
     return header_handler(web.FileResponse(static_path / 'index.html'), 'index.html')
 
-def header_handler(response: web.Response, path: str) -> web.Response:
-    patterns = {
-        r'\.(?:manifest|appcache|html?|xml|json)$': {
-            'expires': '-1'},
-        r'\.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc|woff|woff2)$':{
-            'expires': '1M',
-            'Cache-Control': 'public'},
-        r'\.(?:css|js)$':{
-            'expires': '1d',
-            'Cache-Control':'max-age=86400, public, must-revalidate, proxy-revalidate'}
+
+cache_patterns = {
+    r'\.(?:manifest|appcache|html?|xml|json)$': {
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+    },
+    r'\.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc|woff|woff2)$': {
+        'Cache-Control': 'max-age=259200, public',
+    },
+    r'\.(?:css|js)$': {
+        'Cache-Control': 'max-age=86400, public, must-revalidate, proxy-revalidate',
     }
-    for pattern, headers in patterns.items():
-        regex = re.compile(pattern)
+}
+cache_patterns = {re.compile(k): v for k, v in cache_patterns.items()}
+
+
+def header_handler(response: web.Response, path: str) -> web.Response:
+    for regex, headers in cache_patterns.items():
         mo = regex.search(path)
-        if mo != None:
+        if mo is not None:
             for header, value in headers.items():
                 response.headers[header] = value
     return response
@@ -269,7 +273,7 @@ async def server_main(loop, pidx, args):
 def main(config, debug):
     config = toml.loads(Path(config).read_text(encoding='utf-8'))
     config['debug'] = debug
-    if config['debug'] == True:
+    if config['debug']:
         debugFlag = 'DEBUG'
     else:
         debugFlag = 'INFO'
