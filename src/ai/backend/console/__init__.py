@@ -1,3 +1,3 @@
-__version__ = '19.06.0b2'
+__version__ = '19.06.0b3'
 
 user_agent = f'Backend.AI Console Server {__version__}'
