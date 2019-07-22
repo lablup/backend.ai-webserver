@@ -121,6 +121,7 @@ async def login_check_handler(request: web.Request) -> web.Response:
     return web.json_response({
         'authenticated': authenticated,
         'data': public_data,
+        'session_id': session.identity,  # temporary wsproxy interop patch
     })
 
 
