@@ -55,7 +55,8 @@ async def static_handler(request: web.Request) -> web.StreamResponse:
     except (ValueError, FileNotFoundError):
         return web.HTTPNotFound()
     if file_path.is_file():
-        return web.FileResponse(file_path)
+        resp = web.FileResponse(file_path)
+        return resp
     return web.HTTPNotFound()
 
 
@@ -79,7 +80,8 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
     except (ValueError, FileNotFoundError):
         return web.HTTPNotFound()
     if file_path.is_file():
-        return web.FileResponse(file_path)
+        resp = web.FileResponse(file_path)
+        return resp
 
     return web.FileResponse(static_path / 'index.html')
 
@@ -249,7 +251,10 @@ async def server_main(loop, pidx, args):
 def main(config, debug):
     config = toml.loads(Path(config).read_text(encoding='utf-8'))
     config['debug'] = debug
-
+    if config['debug'] == True:
+        debugFlag = 'DEBUG'
+    else:
+        debugFlag = 'INFO'
     setproctitle(f"backend.ai: console-server "
                  f"{config['service']['ip']}:{config['service']['port']}")
 
@@ -281,7 +286,7 @@ def main(config, debug):
         'loggers': {
             '': {
                 'handlers': ['console'],
-                'level': 'INFO',
+                'level': debugFlag,
             },
         },
     })
