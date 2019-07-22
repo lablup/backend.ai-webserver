@@ -6,6 +6,7 @@ from typing import Any, MutableMapping
 import sys
 import pkg_resources
 import ssl
+import re
 
 from aiohttp import web
 import aiohttp_cors
@@ -55,8 +56,7 @@ async def static_handler(request: web.Request) -> web.StreamResponse:
     except (ValueError, FileNotFoundError):
         return web.HTTPNotFound()
     if file_path.is_file():
-        resp = web.FileResponse(file_path)
-        return resp
+        return header_handler(web.FileResponse(file_path), request_path)
     return web.HTTPNotFound()
 
 
@@ -80,10 +80,28 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
     except (ValueError, FileNotFoundError):
         return web.HTTPNotFound()
     if file_path.is_file():
-        resp = web.FileResponse(file_path)
-        return resp
+        return header_handler(web.FileResponse(file_path), request_path)
 
-    return web.FileResponse(static_path / 'index.html')
+    return header_handler(web.FileResponse(static_path / 'index.html'), 'index.html')
+
+def header_handler(response: web.Response, path: str) -> web.Response:
+    patterns = {
+        r'\.(?:manifest|appcache|html?|xml|json)$': {
+            'expires': '-1'},
+        r'\.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc|woff|woff2)$':{
+            'expires': '1M',
+            'Cache-Control': 'public'},
+        r'\.(?:css|js)$':{
+            'expires': '1d',
+            'Cache-Control':'max-age=86400, public, must-revalidate, proxy-revalidate'}
+    }
+    for pattern, headers in patterns.items():
+        regex = re.compile(pattern)
+        mo = regex.search(path)
+        if mo != None:
+            for header, value in headers.items():
+                response.headers[header] = value
+    return response
 
 
 async def login_check_handler(request: web.Request) -> web.Response:
