@@ -34,7 +34,7 @@ static_path = Path(pkg_resources.resource_filename('ai.backend.console', 'static
 assert static_path.is_dir()
 
 
-console_config_template = jinja2.Template('''[general]
+console_config_ini_template = jinja2.Template('''[general]
 apiEndpoint = {{endpoint_url}}
 apiEndpointText = {{endpoint_text}}
 defaultSessionEnvironment =
@@ -45,6 +45,19 @@ connectionMode = SESSION
 proxyURL = {{proxy_url}}/
 proxyBaseURL =
 proxyListenIP =
+''')
+
+console_config_toml_template = jinja2.Template('''[general]
+apiEndpoint = "{{endpoint_url}}"
+apiEndpointText = "{{endpoint_text}}"
+#defaultSessionEnvironment =
+siteDescription = "{{site_description}}"
+connectionMode = SESSION
+
+[wsproxy]
+proxyURL = "{{proxy_url}}/"
+#proxyBaseURL =
+#proxyListenIP =
 ''')
 
 
@@ -66,7 +79,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
     config = request.app['config']
 
     if request_path == 'config.ini':
-        config_content = console_config_template.render(**{
+        config_content = console_config_ini_template.render(**{
             'endpoint_url': f'{request.scheme}://{request.host}',  # must be absolute
             'endpoint_text': config['api']['text'],
             'site_description': config['ui']['brand'],
@@ -74,6 +87,14 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
         })
         return web.Response(text=config_content)
 
+    if request_path == 'config.toml':
+        config_content = console_config_toml_template.render(**{
+            'endpoint_url': f'{request.scheme}://{request.host}',  # must be absolute
+            'endpoint_text': config['api']['text'],
+            'site_description': config['ui']['brand'],
+            'proxy_url': config['service']['wsproxy']['url'],
+        })
+        return web.Response(text=config_content)
     # SECURITY: only allow reading files under static_path
     try:
         file_path.relative_to(static_path)
@@ -86,7 +107,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
 
 
 cache_patterns = {
-    r'\.(?:manifest|appcache|html?|xml|json)$': {
+    r'\.(?:manifest|appcache|html?|xml|json|ini|toml)$': {
         'Cache-Control': 'no-cache, no-store, must-revalidate'
     },
     r'\.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc|woff|woff2)$': {
