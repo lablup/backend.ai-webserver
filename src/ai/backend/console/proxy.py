@@ -103,11 +103,14 @@ async def web_handler(request):
     try:
         # We treat all requests and responses as streaming universally
         # to be a transparent proxy.
-        params = request.query if request.query else None
         api_rqst = Request(
             api_session, request.method, path, request.content,
-            params=params,
-            content_type=request.content_type)
+            params=request.query)
+        if 'Content-Type' in request.headers:
+            api_rqst.content_type = request.content_type                        # set for signing
+            api_rqst.headers['Content-Type'] = request.headers['Content-Type']  # preserve raw value
+        if 'Content-Length' in request.headers:
+            api_rqst.headers['Content-Length'] = request.headers['Content-Length']
         # Uploading request body happens at the entering of the block,
         # and downloading response body happens in the read loop inside.
         async with api_rqst.fetch() as up_resp:
@@ -150,7 +153,6 @@ async def web_plugin_handler(request):
     try:
         # We treat all requests and responses as streaming universally
         # to be a transparent proxy.
-        params = dict(request.query) if request.query else {}
         content = request.content
         if path == 'auth/signup':
             body = await request.json()
@@ -158,7 +160,7 @@ async def web_plugin_handler(request):
             content = json.dumps(body).encode('utf8')
         api_rqst = Request(
             api_session, request.method, path, content,
-            params=params,
+            params=request.query,
             content_type=request.content_type)
         # Uploading request body happens at the entering of the block,
         # and downloading response body happens in the read loop inside.
