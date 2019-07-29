@@ -128,6 +128,7 @@ async def web_handler(request):
             return down_resp
     except BackendAPIError as e:
         return web.Response(body=json.dumps(e.data),
+                            content_type="application/problem+json",
                             status=e.status, reason=e.reason)
     except BackendClientError:
         log.exception('websocket_handler: BackendClientError')
