@@ -53,6 +53,7 @@ apiEndpointText = "{{endpoint_text}}"
 #defaultSessionEnvironment =
 siteDescription = "{{site_description}}"
 connectionMode = "SESSION"
+signupSupport = {{signup_support}}
 
 [wsproxy]
 proxyURL = "{{proxy_url}}/"
@@ -93,6 +94,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'endpoint_text': config['api']['text'],
             'site_description': config['ui']['brand'],
             'proxy_url': config['service']['wsproxy']['url'],
+            'signup_support': 'true' if config['service']['enable_signup'] else 'false'
         })
         return web.Response(text=config_content)
     # SECURITY: only allow reading files under static_path
