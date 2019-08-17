@@ -1,3 +1,5 @@
+import json
+
 from aiohttp import web
 from aiohttp_session import get_session
 
@@ -11,12 +13,21 @@ async def get_api_session(request: web.Request) -> APISession:
     config = request.app['config']
     session = await get_session(request)
     if not session.get('authenticated', False):
-        raise web.HTTPUnauthorized()
+        raise web.HTTPUnauthorized(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/auth-failed',
+            'title': 'Unauthorized access',
+        }), content_type='application/problem+json')
     if 'token' not in session:
-        raise web.HTTPUnauthorized()
+        raise web.HTTPUnauthorized(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/auth-failed',
+            'title': 'Unauthorized access',
+        }), content_type='application/problem+json')
     token = session['token']
     if token['type'] != 'keypair':
-        raise web.HTTPInternalServerError(text='Incompatible auth token.')
+        raise web.HTTPBadRequest(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/invalid-auth-params',
+            'title': 'Incompatible auth token type.',
+        }), content_type='application/problem+json')
     ak, sk = token['access_key'], token['secret_key']
     config = APIConfig(
         domain=config['api']['domain'],

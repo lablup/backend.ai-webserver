@@ -1,5 +1,6 @@
 import logging
 import logging.config
+import json
 import os
 from pathlib import Path
 from typing import Any, MutableMapping
@@ -68,10 +69,16 @@ async def static_handler(request: web.Request) -> web.StreamResponse:
     try:
         file_path.relative_to(static_path)
     except (ValueError, FileNotFoundError):
-        return web.HTTPNotFound()
+        return web.HTTPNotFound(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/generic-not-found',
+            'title': 'Not Found',
+        }), content_type='application/problem+json')
     if file_path.is_file():
         return header_handler(web.FileResponse(file_path), request_path)
-    return web.HTTPNotFound()
+    return web.HTTPNotFound(text=json.dumps({
+        'type': 'https://api.backend.ai/probs/generic-not-found',
+        'title': 'Not Found',
+    }), content_type='application/problem+json')
 
 
 async def console_handler(request: web.Request) -> web.StreamResponse:
@@ -101,7 +108,10 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
     try:
         file_path.relative_to(static_path)
     except (ValueError, FileNotFoundError):
-        return web.HTTPNotFound()
+        return web.HTTPNotFound(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/generic-not-found',
+            'title': 'Not Found',
+        }), content_type='application/problem+json')
     if file_path.is_file():
         return header_handler(web.FileResponse(file_path), request_path)
 
@@ -152,12 +162,21 @@ async def login_handler(request: web.Request) -> web.Response:
     config = request.app['config']
     session = await get_session(request)
     if session.get('authenticated', False):
-        return web.HTTPBadRequest(text='You have already logged in.')
+        return web.HTTPBadRequest(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/generic-bad-request',
+            'title': 'You have already logged in.',
+        }), content_type='application/problem+json')
     creds = await request.json()
     if 'username' not in creds:
-        raise web.HTTPBadRequest(text='You must provide the username field.')
+        return web.HTTPBadRequest(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/invalid-api-params',
+            'title': 'You must provide the username field.',
+        }), content_type='application/problem+json')
     if 'password' not in creds:
-        raise web.HTTPBadRequest(text='You must provide the password field.')
+        return web.HTTPBadRequest(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/invalid-api-params',
+            'title': 'You must provide the password field.',
+        }), content_type='application/problem+json')
     result: MutableMapping[str, Any] = {
         'authenticated': False,
         'data': None,
@@ -340,6 +359,7 @@ def main(config, debug):
     log.info('runtime: {0}', sys.prefix)
     log_config = logging.getLogger('ai.backend.console.config')
     log_config.debug('debug mode enabled.')
+    log.info('serving at {0}:{1}', config['service']['ip'], config['service']['port'])
 
     try:
         uvloop.install()

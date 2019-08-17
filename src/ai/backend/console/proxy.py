@@ -132,18 +132,18 @@ async def web_handler(request):
                             status=e.status, reason=e.reason)
     except BackendClientError:
         log.exception('websocket_handler: BackendClientError')
-        return web.Response(
-            body="The proxy target server is inaccessible.",
-            status=502,
-            reason="Bad Gateway")
+        return web.HTTPBadGateway(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/bad-gateway',
+            'title': "The proxy target server is inaccessible.",
+        }), content_type='application/problem+json')
     except asyncio.CancelledError:
         raise
     except Exception:
         log.exception('web_handler: unexpected error')
-        return web.Response(
-            body="Something has gone wrong.",
-            status=500,
-            reason="Internal Server Error")
+        return web.HTTPInternalServerError(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/internal-server-error',
+            'title': "Something has gone wrong.",
+        }), content_type='application/problem+json')
     finally:
         await api_session.close()
 
