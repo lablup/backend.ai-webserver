@@ -187,7 +187,7 @@ async def login_handler(request: web.Request) -> web.Response:
             endpoint=config['api']['endpoint'],
             access_key='', secret_key='',  # anonymous session
             user_agent=user_agent,
-            skip_sslcert_validation=config['api'].get('ssl-verify', True),
+            skip_sslcert_validation=not config['api'].get('ssl-verify', True),
         )
         assert anon_api_config.is_anonymous
         async with APISession(config=anon_api_config) as api_session:
