@@ -155,7 +155,7 @@ async def web_plugin_handler(request):
         # We treat all requests and responses as streaming universally
         # to be a transparent proxy.
         content = request.content
-        if path == 'auth/signup':
+        if path == 'auth/signup' or path == 'auth/signout':
             body = await request.json()
             body['domain'] = request.app['config']['api']['domain']
             content = json.dumps(body).encode('utf8')
