@@ -21,6 +21,17 @@ You don't have to write `config.ini` for the console as this console server auto
 
 Edit `console-server.conf` to match with your environment.
 
+To download and deploy console from pre-built source, do the following:
+
+```console
+git submodule init
+git submodule update
+cd src/ai/backend/console/static
+git checkout master
+git fetch
+git pull
+```
+
 ## Mode
 
 If `service.mode` is set "webconsole" (the default), the console server handles
