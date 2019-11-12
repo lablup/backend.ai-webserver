@@ -14,7 +14,19 @@ $ pip install -U -e .
 $ cp console-server.sample.conf console-server.conf
 ```
 
-If you want to serve console in console-server, choose one of the followings.
+## Mode
+
+If `service.mode` is set "webconsole" (the default), the console server handles
+PWA-style fallbacks (e.g., serving `index.html` when there are no matching
+files for the requested URL path).
+The PWA must exclude `/server` and `/func` URL prefixes from its own routing
+to work with the console server's web sessions and the API proxy.
+
+If it is set "static", the console server serves the static files as-is,
+without any fallbacks or hooking, while preserving the `/server` and `/func`
+prefixed URLs and their functionalities.
+
+If you want to serve console in console-server with "webconsole" mode, prepare static console source by choosing one of the followings.
 
 ### Option 1: Build console from source
 
@@ -35,21 +47,10 @@ git pull
 ```
 ### Setup configuration for console-server
 
-You don't have to write `config.ini` for the console as this console server auto-generates it on-the-fly.
+You don't have to write `config.toml` for the console as this console server auto-generates it on-the-fly.
 
 Edit `console-server.conf` to match with your environment.
 
-## Mode
-
-If `service.mode` is set "webconsole" (the default), the console server handles
-PWA-style fallbacks (e.g., serving `index.html` when there are no matching
-files for the requested URL path).
-The PWA must exclude `/server` and `/func` URL prefixes from its own routing
-to work with the console server's web sessions and the API proxy.
-
-If it is set "static", the console server serves the static files as-is,
-without any fallbacks or hooking, while preserving the `/server` and `/func`
-prefixed URLs and their functionalities.
 
 ## Usage
 
