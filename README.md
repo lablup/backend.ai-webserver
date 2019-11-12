@@ -14,12 +14,14 @@ $ pip install -U -e .
 $ cp console-server.sample.conf console-server.conf
 ```
 
+If you want to serve console in console-server, choose one of the followings.
+
+### Option 1: Build console from source
+
 Build **[backend.ai-console](https://github.com/lablup/backend.ai-console)** and copy all files under `build/bundle`
 into the `src/ai/backend/console/static` directory.
 
-You don't have to write `config.ini` for the console as this console server auto-generates it on-the-fly.
-
-Edit `console-server.conf` to match with your environment.
+### Option 2: Use pre-built console
 
 To download and deploy console from pre-built source, do the following:
 
@@ -31,6 +33,11 @@ git checkout master
 git fetch
 git pull
 ```
+### Setup configuration for console-server
+
+You don't have to write `config.ini` for the console as this console server auto-generates it on-the-fly.
+
+Edit `console-server.conf` to match with your environment.
 
 ## Mode
 
