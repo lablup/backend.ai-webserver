@@ -3,11 +3,13 @@ import logging.config
 import json
 import os
 from pathlib import Path
-from typing import Any, MutableMapping
-import sys
 import pkg_resources
-import ssl
 import re
+import ssl
+import sys
+from typing import (
+    Any, MutableMapping,
+)
 
 from aiohttp import web
 import aiohttp_cors
@@ -371,6 +373,7 @@ def main(config, debug):
         aiotools.start_server(
             server_main,
             num_workers=min(4, os.cpu_count()),
+            start_method='fork',
             args=(config,),
         )
     finally:
