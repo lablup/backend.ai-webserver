@@ -24,7 +24,7 @@ import toml
 import uvloop
 
 from ai.backend.client.config import APIConfig
-from ai.backend.client.exceptions import BackendError
+from ai.backend.client.exceptions import BackendClientError, BackendAPIError
 from ai.backend.client.session import AsyncSession as APISession
 
 from . import __version__, user_agent
@@ -210,7 +210,13 @@ async def login_handler(request: web.Request) -> web.Response:
             session['token'] = stored_token  # store full token
             result['authenticated'] = True
             result['data'] = public_return  # store public info from token
-    except BackendError as e:
+    except BackendClientError as e:
+        return web.HTTPBadGateway(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/bad-gateway',
+            'title': "The proxy target server is inaccessible.",
+            'details': str(e),
+        }), content_type='application/problem+json')
+    except BackendAPIError as e:
         log.info('Authorization failed for {}: {}', creds['username'], e)
         result['authenticated'] = False
         session['authenticated'] = False
