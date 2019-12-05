@@ -266,6 +266,9 @@ async def server_main(loop, pidx, args):
     }
     cors = aiohttp_cors.setup(app, defaults=cors_options)
 
+    app.router.add_route('HEAD', '/func/{path:folders/_/tus/upload/.*$}', web_plugin_handler)
+    app.router.add_route('PATCH', '/func/{path:folders/_/tus/upload/.*$}', web_plugin_handler)
+    app.router.add_route('OPTIONS', '/func/{path:folders/_/tus/upload/.*$}', web_plugin_handler)
     cors.add(app.router.add_route('POST', '/server/login', login_handler))
     cors.add(app.router.add_route('POST', '/server/login-check', login_check_handler))
     cors.add(app.router.add_route('POST', '/server/logout', logout_handler))
