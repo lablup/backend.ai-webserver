@@ -1,3 +1,4 @@
+from functools import partial
 import logging
 import logging.config
 import json
@@ -266,17 +267,21 @@ async def server_main(loop, pidx, args):
     }
     cors = aiohttp_cors.setup(app, defaults=cors_options)
 
-    app.router.add_route('HEAD', '/func/{path:folders/_/tus/upload/.*$}', web_plugin_handler)
-    app.router.add_route('PATCH', '/func/{path:folders/_/tus/upload/.*$}', web_plugin_handler)
-    app.router.add_route('OPTIONS', '/func/{path:folders/_/tus/upload/.*$}', web_plugin_handler)
+    anon_web_handler = partial(web_handler, is_anonymous=True)
+    anon_web_plugin_handler = partial(web_plugin_handler, is_anonymous=True)
+
+    app.router.add_route('HEAD', '/func/{path:folders/_/tus/upload/.*$}', anon_web_plugin_handler)
+    app.router.add_route('PATCH', '/func/{path:folders/_/tus/upload/.*$}', anon_web_plugin_handler)
+    app.router.add_route('OPTIONS', '/func/{path:folders/_/tus/upload/.*$}', anon_web_plugin_handler)
     cors.add(app.router.add_route('POST', '/server/login', login_handler))
     cors.add(app.router.add_route('POST', '/server/login-check', login_check_handler))
     cors.add(app.router.add_route('POST', '/server/logout', logout_handler))
-    cors.add(app.router.add_route('GET', '/func/{path:hanati/user}', web_plugin_handler))
-    cors.add(app.router.add_route('POST', '/func/{path:auth/signup}', web_plugin_handler))
+    cors.add(app.router.add_route('GET', '/func/{path:hanati/user}', anon_web_plugin_handler))
+    cors.add(app.router.add_route('POST', '/func/{path:auth/signup}', anon_web_plugin_handler))
     cors.add(app.router.add_route('POST', '/func/{path:auth/signout}', web_handler))
     cors.add(app.router.add_route('GET', '/func/{path:stream/kernel/_/events}', web_handler))
     cors.add(app.router.add_route('GET', '/func/{path:stream/.*$}', websocket_handler))
+    cors.add(app.router.add_route('GET', '/func/', anon_web_handler))
     cors.add(app.router.add_route('HEAD', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('GET', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('PUT', '/func/{path:.*$}', web_handler))

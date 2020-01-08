@@ -97,9 +97,12 @@ class WebSocketProxy:
             await self.up_conn.close()
 
 
-async def web_handler(request):
-    path = request.match_info['path']
-    api_session = await asyncio.shield(get_api_session(request))
+async def web_handler(request, *, is_anonymous=False):
+    path = request.match_info.get('path', '')
+    if is_anonymous:
+        api_session = await asyncio.shield(get_anonymous_session(request))
+    else:
+        api_session = await asyncio.shield(get_api_session(request))
     try:
         # We treat all requests and responses as streaming universally
         # to be a transparent proxy.
@@ -126,18 +129,18 @@ async def web_handler(request):
                     break
                 await down_resp.write(chunk)
             return down_resp
+    except asyncio.CancelledError:
+        raise
     except BackendAPIError as e:
         return web.Response(body=json.dumps(e.data),
                             content_type="application/problem+json",
                             status=e.status, reason=e.reason)
     except BackendClientError:
-        log.exception('websocket_handler: BackendClientError')
+        log.exception('web_handler: BackendClientError')
         return web.HTTPBadGateway(text=json.dumps({
             'type': 'https://api.backend.ai/probs/bad-gateway',
             'title': "The proxy target server is inaccessible.",
         }), content_type='application/problem+json')
-    except asyncio.CancelledError:
-        raise
     except Exception:
         log.exception('web_handler: unexpected error')
         return web.HTTPInternalServerError(text=json.dumps({
@@ -148,9 +151,17 @@ async def web_handler(request):
         await api_session.close()
 
 
-async def web_plugin_handler(request):
+async def web_plugin_handler(request, *, is_anonymous=False):
+    '''
+    This handler is almost same to web_handler, but does not manipulate the
+    content-type and content-length headers before sending up-requests.
+    It also configures the domain in the json body for "auth/signup" requests.
+    '''
     path = request.match_info['path']
-    api_session = await asyncio.shield(get_anonymous_session(request))
+    if is_anonymous:
+        api_session = await asyncio.shield(get_anonymous_session(request))
+    else:
+        api_session = await asyncio.shield(get_api_session(request))
     try:
         # We treat all requests and responses as streaming universally
         # to be a transparent proxy.
@@ -178,30 +189,33 @@ async def web_plugin_handler(request):
                     break
                 await down_resp.write(chunk)
             return down_resp
+    except asyncio.CancelledError:
+        raise
     except BackendAPIError as e:
         return web.Response(body=json.dumps(e.data),
                             status=e.status, reason=e.reason)
     except BackendClientError:
-        log.exception('websocket_handler: BackendClientError')
-        return web.Response(
-            body="The proxy target server is inaccessible.",
-            status=502,
-            reason="Bad Gateway")
-    except asyncio.CancelledError:
-        raise
+        log.exception('web_plugin_handler: BackendClientError')
+        return web.HTTPBadGateway(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/bad-gateway',
+            'title': "The proxy target server is inaccessible.",
+        }), content_type='application/problem+json')
     except Exception:
-        log.exception('web_handler: unexpected error')
-        return web.Response(
-            body="Something has gone wrong.",
-            status=500,
-            reason="Internal Server Error")
+        log.exception('web_plugin_handler: unexpected error')
+        return web.HTTPInternalServerError(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/internal-server-error',
+            'title': "Something has gone wrong.",
+        }), content_type='application/problem+json')
     finally:
         await api_session.close()
 
 
-async def websocket_handler(request):
+async def websocket_handler(request, *, is_anonymous=False):
     path = request.match_info['path']
-    api_session = await asyncio.shield(get_api_session(request))
+    if is_anonymous:
+        api_session = await asyncio.shield(get_anonymous_session(request))
+    else:
+        api_session = await asyncio.shield(get_api_session(request))
     try:
         params = request.query if request.query else None
         api_rqst = Request(
@@ -214,22 +228,22 @@ async def websocket_handler(request):
             web_socket_proxy = WebSocketProxy(up_conn, down_conn)
             await web_socket_proxy.proxy()
             return down_conn
+    except asyncio.CancelledError:
+        raise
     except BackendAPIError as e:
         return web.Response(body=json.dumps(e.data),
                             status=e.status, reason=e.reason)
     except BackendClientError:
         log.exception('websocket_handler: BackendClientError')
-        return web.Response(
-            body="The proxy target server is inaccessible.",
-            status=502,
-            reason="Bad Gateway")
-    except asyncio.CancelledError:
-        raise
+        return web.HTTPBadGateway(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/bad-gateway',
+            'title': "The proxy target server is inaccessible.",
+        }), content_type='application/problem+json')
     except Exception:
         log.exception('websocket_handler: unexpected error')
-        return web.Response(
-            body="Something has gone wrong.",
-            status=500,
-            reason="Internal Server Error")
+        return web.HTTPInternalServerError(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/internal-server-error',
+            'title': "Something has gone wrong.",
+        }), content_type='application/problem+json')
     finally:
         await api_session.close()
