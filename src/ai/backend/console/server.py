@@ -106,7 +106,8 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'site_description': config['ui']['brand'],
             'proxy_url': config['service']['wsproxy']['url'],
             'signup_support': 'true' if config['service']['enable_signup'] else 'false',
-            'allow_project_resource_monitor': 'true' if config['service']['allow_project_resource_monitor'] else 'false'
+            'allow_project_resource_monitor':
+                'true' if config['service']['allow_project_resource_monitor'] else 'false'
         })
         return web.Response(text=config_content)
     # SECURITY: only allow reading files under static_path
@@ -134,11 +135,11 @@ cache_patterns = {
         'Cache-Control': 'max-age=86400, public, must-revalidate, proxy-revalidate',
     }
 }
-cache_patterns = {re.compile(k): v for k, v in cache_patterns.items()}
+_cache_patterns = {re.compile(k): v for k, v in cache_patterns.items()}
 
 
-def header_handler(response: web.Response, path: str) -> web.Response:
-    for regex, headers in cache_patterns.items():
+def header_handler(response: web.StreamResponse, path: str) -> web.StreamResponse:
+    for regex, headers in _cache_patterns.items():
         mo = regex.search(path)
         if mo is not None:
             for header, value in headers.items():
