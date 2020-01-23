@@ -135,11 +135,11 @@ cache_patterns = {
         'Cache-Control': 'max-age=86400, public, must-revalidate, proxy-revalidate',
     }
 }
-cache_patterns = {re.compile(k): v for k, v in cache_patterns.items()}
+_cache_patterns = {re.compile(k): v for k, v in cache_patterns.items()}
 
 
-def header_handler(response: web.Response, path: str) -> web.Response:
-    for regex, headers in cache_patterns.items():
+def header_handler(response: web.StreamResponse, path: str) -> web.StreamResponse:
+    for regex, headers in _cache_patterns.items():
         mo = regex.search(path)
         if mo is not None:
             for header, value in headers.items():
