@@ -1,0 +1,42 @@
+language: python
+dist: xenial
+cache: pip
+
+stages:
+  - name: test
+  - name: deploy
+    if: tag IS present
+
+python:
+  - "3.8"
+os:
+  - linux
+
+matrix:
+  fast_finish: true
+
+# test stage
+install:
+  - pip install -U pip setuptools
+  - pip install -U -r requirements/test.txt
+script:
+  - python -m pytest --cov=ai.backend.console -v -m "not integration"
+after_success:
+  - codecov
+
+# other stages
+jobs:
+  include:
+    - stage: deploy
+      python: "3.8"
+      install: skip
+      script: skip
+      deploy:
+        on:
+          tags: true
+        provider: pypi
+        distributions: sdist bdist_wheel
+        skip_upload_docs: true
+        user: "__token__"
+        password:
+          secure: ""
