@@ -142,8 +142,8 @@ def header_handler(response: web.StreamResponse, path: str) -> web.StreamRespons
     for regex, headers in _cache_patterns.items():
         mo = regex.search(path)
         if mo is not None:
-            for header, value in headers.items():
-                response.headers[header] = value
+            response.headers.update(headers)
+            break
     return response
 
 
