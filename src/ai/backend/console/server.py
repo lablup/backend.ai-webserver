@@ -125,7 +125,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
 
 
 cache_patterns = {
-    r'\.(?:manifest|appcache|html?|xml|json|ini|toml)$': {
+    r'\.(?:manifest|appcache|html?|xml|json|ini|toml|backend\.ai-console\.js)$': {
         'Cache-Control': 'no-cache, no-store, must-revalidate'
     },
     r'\.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc|woff|woff2)$': {
@@ -142,8 +142,8 @@ def header_handler(response: web.StreamResponse, path: str) -> web.StreamRespons
     for regex, headers in _cache_patterns.items():
         mo = regex.search(path)
         if mo is not None:
-            for header, value in headers.items():
-                response.headers[header] = value
+            response.headers.update(headers)
+            break
     return response
 
 
