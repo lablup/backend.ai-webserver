@@ -90,7 +90,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
     file_path = (static_path / request_path).resolve()
     config = request.app['config']
     if 'force-endpoint-protocol' in config['service'] and \
-        config['service']['force-endpoint-protocol'] in ['http', 'https']:
+            config['service']['force-endpoint-protocol'] in ['http', 'https']:
         scheme = config['service']['force-endpoint-protocol']
     else:
         scheme = request.scheme
