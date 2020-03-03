@@ -89,10 +89,13 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
     request_path = request.match_info['path']
     file_path = (static_path / request_path).resolve()
     config = request.app['config']
+    scheme = config['service'].get('force-endpoint-protocol')
+    if scheme is None:
+        scheme = request.scheme
 
     if request_path == 'config.ini':
         config_content = console_config_ini_template.render(**{
-            'endpoint_url': f'{request.scheme}://{request.host}',  # must be absolute
+            'endpoint_url': f'{scheme}://{request.host}',  # must be absolute
             'endpoint_text': config['api']['text'],
             'site_description': config['ui']['brand'],
             'proxy_url': config['service']['wsproxy']['url'],
@@ -101,7 +104,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
 
     if request_path == 'config.toml':
         config_content = console_config_toml_template.render(**{
-            'endpoint_url': f'{request.scheme}://{request.host}',  # must be absolute
+            'endpoint_url': f'{scheme}://{request.host}',  # must be absolute
             'endpoint_text': config['api']['text'],
             'site_description': config['ui']['brand'],
             'proxy_url': config['service']['wsproxy']['url'],
