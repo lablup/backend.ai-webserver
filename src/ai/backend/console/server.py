@@ -121,7 +121,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
                 'true' if config['service']['allow_project_resource_monitor'] else 'false',
             'license_edition': license_edition if license_edition is not None else 'Open Source',
             'license_valid_since': license_valid_since if license_valid_since is not None else '',
-            'license_valid_until': license_valid_until if license_valid_until is not None else ''
+            'license_valid_until': license_valid_until if license_valid_until is not None else '',
         })
         return web.Response(text=config_content)
     # SECURITY: only allow reading files under static_path
