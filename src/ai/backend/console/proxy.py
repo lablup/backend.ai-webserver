@@ -1,6 +1,13 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import json
+from typing import (
+    Optional, Union,
+    Tuple,
+    cast,
+)
 
 import aiohttp
 from aiohttp import web
@@ -20,18 +27,23 @@ class WebSocketProxy:
         'upstream_buffer', 'upstream_buffer_task',
     )
 
+    up_conn: aiohttp.ClientWebSocketResponse
+    down_conn: web.WebSocketResponse
+    upstream_buffer: asyncio.Queue[Tuple[Union[str, bytes], aiohttp.WSMsgType]]
+    upstream_buffer_task: Optional[asyncio.Task]
+
     def __init__(self, up_conn: aiohttp.ClientWebSocketResponse,
-                 down_conn: web.WebSocketResponse):
+                 down_conn: web.WebSocketResponse) -> None:
         self.up_conn = up_conn
         self.down_conn = down_conn
         self.upstream_buffer = asyncio.Queue()
         self.upstream_buffer_task = None
 
-    async def proxy(self):
+    async def proxy(self) -> None:
         asyncio.ensure_future(self.downstream())
         await self.upstream()
 
-    async def upstream(self):
+    async def upstream(self) -> None:
         try:
             async for msg in self.down_conn:
                 if msg.type in (aiohttp.WSMsgType.TEXT, aiohttp.WSMsgType.BINARY):
@@ -49,10 +61,10 @@ class WebSocketProxy:
         finally:
             await self.close_downstream()
 
-    async def downstream(self):
+    async def downstream(self) -> None:
         try:
             self.upstream_buffer_task = \
-                    asyncio.ensure_future(self.consume_upstream_buffer())
+                    asyncio.create_task(self.consume_upstream_buffer())
             async for msg in self.up_conn:
                 if msg.type == aiohttp.WSMsgType.TEXT:
                     await self.down_conn.send_str(msg.data)
@@ -70,34 +82,34 @@ class WebSocketProxy:
         finally:
             await self.close_upstream()
 
-    async def consume_upstream_buffer(self):
+    async def consume_upstream_buffer(self) -> None:
         try:
             while True:
                 data, tp = await self.upstream_buffer.get()
                 if not self.up_conn.closed:
                     if tp == aiohttp.WSMsgType.BINARY:
-                        await self.up_conn.send_bytes(data)
+                        await self.up_conn.send_bytes(cast(bytes, data))
                     elif tp == aiohttp.WSMsgType.TEXT:
-                        await self.up_conn.send_str(data)
+                        await self.up_conn.send_str(cast(str, data))
         except asyncio.CancelledError:
             pass
 
-    async def send(self, msg: str, tp: aiohttp.WSMsgType):
+    async def send(self, msg: str, tp: aiohttp.WSMsgType) -> None:
         await self.upstream_buffer.put((msg, tp))
 
-    async def close_downstream(self):
+    async def close_downstream(self) -> None:
         if not self.down_conn.closed:
             await self.down_conn.close()
 
-    async def close_upstream(self):
-        if not self.upstream_buffer_task.done():
+    async def close_upstream(self) -> None:
+        if self.upstream_buffer_task is not None and not self.upstream_buffer_task.done():
             self.upstream_buffer_task.cancel()
             await self.upstream_buffer_task
         if not self.up_conn.closed:
             await self.up_conn.close()
 
 
-async def web_handler(request, *, is_anonymous=False):
+async def web_handler(request, *, is_anonymous=False) -> web.StreamResponse:
     path = request.match_info.get('path', '')
     if is_anonymous:
         api_session = await asyncio.shield(get_anonymous_session(request))
@@ -151,7 +163,7 @@ async def web_handler(request, *, is_anonymous=False):
         await api_session.close()
 
 
-async def web_plugin_handler(request, *, is_anonymous=False):
+async def web_plugin_handler(request, *, is_anonymous=False) -> web.StreamResponse:
     '''
     This handler is almost same to web_handler, but does not manipulate the
     content-type and content-length headers before sending up-requests.
@@ -210,7 +222,7 @@ async def web_plugin_handler(request, *, is_anonymous=False):
         await api_session.close()
 
 
-async def websocket_handler(request, *, is_anonymous=False):
+async def websocket_handler(request, *, is_anonymous=False) -> web.StreamResponse:
     path = request.match_info['path']
     if is_anonymous:
         api_session = await asyncio.shield(get_anonymous_session(request))
