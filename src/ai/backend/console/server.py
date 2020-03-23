@@ -39,7 +39,9 @@ assert static_path.is_dir()
 console_config_ini_template = jinja2.Template('''[general]
 apiEndpoint = {{endpoint_url}}
 apiEndpointText = {{endpoint_text}}
-defaultSessionEnvironment =
+{% if default_environment %}
+defaultSessionEnvironment = "{{default_environment}}"
+{% endif %}
 siteDescription = {{site_description}}
 connectionMode = "SESSION"
 
@@ -52,7 +54,9 @@ proxyListenIP =
 console_config_toml_template = jinja2.Template('''[general]
 apiEndpoint = "{{endpoint_url}}"
 apiEndpointText = "{{endpoint_text}}"
-#defaultSessionEnvironment =
+{% if default_environment %}
+defaultSessionEnvironment = "{{default_environment}}"
+{% endif %}
 siteDescription = "{{site_description}}"
 connectionMode = "SESSION"
 signupSupport = {{signup_support}}
@@ -101,6 +105,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'endpoint_url': f'{scheme}://{request.host}',  # must be absolute
             'endpoint_text': config['api']['text'],
             'site_description': config['ui']['brand'],
+            'default_environment': config['ui'].get('default_environment'),
             'proxy_url': config['service']['wsproxy']['url'],
         })
         return web.Response(text=config_content)
@@ -113,6 +118,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'endpoint_url': f'{scheme}://{request.host}',  # must be absolute
             'endpoint_text': config['api']['text'],
             'site_description': config['ui']['brand'],
+            'default_environment': config['ui'].get('default_environment'),
             'proxy_url': config['service']['wsproxy']['url'],
             'signup_support': 'true' if config['service']['enable_signup'] else 'false',
             'allow_project_resource_monitor':
