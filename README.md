@@ -54,6 +54,7 @@ Edit `console-server.conf` to match with your environment.
 
 ## Usage
 
+NOTE: Environment variable 'BACKEND_ENDPOINT_TYPE` must be `api` to run console server. 
 ```console
 $ python -m ai.backend.console.server
 ```
