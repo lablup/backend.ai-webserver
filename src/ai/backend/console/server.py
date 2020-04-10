@@ -124,7 +124,8 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'default_environment': config['ui'].get('default_environment'),
             'proxy_url': config['service']['wsproxy']['url'],
             'signup_support': 'true' if config['service']['enable_signup'] else 'false',
-            'allow_change_signin_mode': 'true' if config['service'].get('allow_change_signin_mode') else 'false',
+            'allow_change_signin_mode': 
+                'true' if config['service'].get('allow_change_signin_mode') else 'false',
             'allow_project_resource_monitor':
                 'true' if config['service']['allow_project_resource_monitor'] else 'false',
             'license_edition': license_edition if license_edition is not None else 'Open Source',
