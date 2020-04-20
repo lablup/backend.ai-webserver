@@ -116,31 +116,37 @@ async def web_handler(request, *, is_anonymous=False) -> web.StreamResponse:
     else:
         api_session = await asyncio.shield(get_api_session(request))
     try:
-        # We treat all requests and responses as streaming universally
-        # to be a transparent proxy.
-        api_rqst = Request(
-            api_session, request.method, path, request.content,
-            params=request.query)
-        if 'Content-Type' in request.headers:
-            api_rqst.content_type = request.content_type                        # set for signing
-            api_rqst.headers['Content-Type'] = request.headers['Content-Type']  # preserve raw value
-        if 'Content-Length' in request.headers:
-            api_rqst.headers['Content-Length'] = request.headers['Content-Length']
-        # Uploading request body happens at the entering of the block,
-        # and downloading response body happens in the read loop inside.
-        async with api_rqst.fetch() as up_resp:
-            down_resp = web.StreamResponse()
-            down_resp.set_status(up_resp.status, up_resp.reason)
-            down_resp.headers.update(up_resp.headers)
-            # We already have configured CORS handlers and the API server
-            # also provides those headers.  Just let them as-is.
-            await down_resp.prepare(request)
-            while True:
-                chunk = await up_resp.aread(8192)
-                if not chunk:
-                    break
-                await down_resp.write(chunk)
-            return down_resp
+        async with api_session:
+            # We perform request signing by ourselves using the HTTP session data,
+            # but need to keep the client's version header so that
+            # the final clients may perform its own API versioning support.
+            request_api_version = request.headers.get('X-BackendAI-Version', None)
+            # We treat all requests and responses as streaming universally
+            # to be a transparent proxy.
+            api_rqst = Request(
+                api_session, request.method, path, request.content,
+                params=request.query,
+                override_api_version=request_api_version)
+            if 'Content-Type' in request.headers:
+                api_rqst.content_type = request.content_type                        # set for signing
+                api_rqst.headers['Content-Type'] = request.headers['Content-Type']  # preserve raw value
+            if 'Content-Length' in request.headers:
+                api_rqst.headers['Content-Length'] = request.headers['Content-Length']
+            # Uploading request body happens at the entering of the block,
+            # and downloading response body happens in the read loop inside.
+            async with api_rqst.fetch() as up_resp:
+                down_resp = web.StreamResponse()
+                down_resp.set_status(up_resp.status, up_resp.reason)
+                down_resp.headers.update(up_resp.headers)
+                # We already have configured CORS handlers and the API server
+                # also provides those headers.  Just let them as-is.
+                await down_resp.prepare(request)
+                while True:
+                    chunk = await up_resp.read(8192)
+                    if not chunk:
+                        break
+                    await down_resp.write(chunk)
+                return down_resp
     except asyncio.CancelledError:
         raise
     except BackendAPIError as e:
@@ -164,43 +170,42 @@ async def web_handler(request, *, is_anonymous=False) -> web.StreamResponse:
 
 
 async def web_plugin_handler(request, *, is_anonymous=False) -> web.StreamResponse:
-    '''
+    """
     This handler is almost same to web_handler, but does not manipulate the
     content-type and content-length headers before sending up-requests.
     It also configures the domain in the json body for "auth/signup" requests.
-    '''
+    """
     path = request.match_info['path']
     if is_anonymous:
         api_session = await asyncio.shield(get_anonymous_session(request))
     else:
         api_session = await asyncio.shield(get_api_session(request))
     try:
-        # We treat all requests and responses as streaming universally
-        # to be a transparent proxy.
-        content = request.content
-        if path == 'auth/signup':
-            body = await request.json()
-            body['domain'] = request.app['config']['api']['domain']
-            content = json.dumps(body).encode('utf8')
-        api_rqst = Request(
-            api_session, request.method, path, content,
-            params=request.query,
-            content_type=request.content_type)
-        # Uploading request body happens at the entering of the block,
-        # and downloading response body happens in the read loop inside.
-        async with api_rqst.fetch() as up_resp:
-            down_resp = web.StreamResponse()
-            down_resp.set_status(up_resp.status, up_resp.reason)
-            down_resp.headers.update(up_resp.headers)
-            # We already have configured CORS handlers and the API server
-            # also provides those headers.  Just let them as-is.
-            await down_resp.prepare(request)
-            while True:
-                chunk = await up_resp.aread(8192)
-                if not chunk:
-                    break
-                await down_resp.write(chunk)
-            return down_resp
+        async with api_session:
+            content = request.content
+            if path == 'auth/signup':
+                body = await request.json()
+                body['domain'] = request.app['config']['api']['domain']
+                content = json.dumps(body).encode('utf8')
+            request_api_version = request.headers.get('X-BackendAI-Version', None)
+            api_rqst = Request(
+                api_session, request.method, path, content,
+                params=request.query,
+                content_type=request.content_type,
+                override_api_version=request_api_version)
+            async with api_rqst.fetch() as up_resp:
+                down_resp = web.StreamResponse()
+                down_resp.set_status(up_resp.status, up_resp.reason)
+                down_resp.headers.update(up_resp.headers)
+                # We already have configured CORS handlers and the API server
+                # also provides those headers.  Just let them as-is.
+                await down_resp.prepare(request)
+                while True:
+                    chunk = await up_resp.read(8192)
+                    if not chunk:
+                        break
+                    await down_resp.write(chunk)
+                return down_resp
     except asyncio.CancelledError:
         raise
     except BackendAPIError as e:
@@ -218,8 +223,6 @@ async def web_plugin_handler(request, *, is_anonymous=False) -> web.StreamRespon
             'type': 'https://api.backend.ai/probs/internal-server-error',
             'title': "Something has gone wrong.",
         }), content_type='application/problem+json')
-    finally:
-        await api_session.close()
 
 
 async def websocket_handler(request, *, is_anonymous=False) -> web.StreamResponse:
@@ -229,17 +232,20 @@ async def websocket_handler(request, *, is_anonymous=False) -> web.StreamRespons
     else:
         api_session = await asyncio.shield(get_api_session(request))
     try:
-        params = request.query if request.query else None
-        api_rqst = Request(
-            api_session, request.method, path, request.content,
-            params=params,
-            content_type=request.content_type)
-        async with api_rqst.connect_websocket() as up_conn:
-            down_conn = web.WebSocketResponse()
-            await down_conn.prepare(request)
-            web_socket_proxy = WebSocketProxy(up_conn, down_conn)
-            await web_socket_proxy.proxy()
-            return down_conn
+        async with api_session:
+            request_api_version = request.headers.get('X-BackendAI-Version', None)
+            params = request.query if request.query else None
+            api_rqst = Request(
+                api_session, request.method, path, request.content,
+                params=params,
+                content_type=request.content_type,
+                override_api_version=request_api_version)
+            async with api_rqst.connect_websocket() as up_conn:
+                down_conn = web.WebSocketResponse()
+                await down_conn.prepare(request)
+                web_socket_proxy = WebSocketProxy(up_conn.raw_websocket, down_conn)
+                await web_socket_proxy.proxy()
+                return down_conn
     except asyncio.CancelledError:
         raise
     except BackendAPIError as e:
@@ -257,5 +263,3 @@ async def websocket_handler(request, *, is_anonymous=False) -> web.StreamRespons
             'type': 'https://api.backend.ai/probs/internal-server-error',
             'title': "Something has gone wrong.",
         }), content_type='application/problem+json')
-    finally:
-        await api_session.close()

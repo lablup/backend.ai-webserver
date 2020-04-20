@@ -114,9 +114,9 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
         return web.Response(text=config_content)
 
     if request_path == 'config.toml':
-        license_edition = config['license'].get('edition')
-        license_valid_since = config['license'].get('valid_since')
-        license_valid_until = config['license'].get('valid_until')
+        license_edition = config['license'].get('edition', 'Open Source')
+        license_valid_since = config['license'].get('valid_since', '')
+        license_valid_until = config['license'].get('valid_until', '')
         config_content = console_config_toml_template.render(**{
             'endpoint_url': f'{scheme}://{request.host}',  # must be absolute
             'endpoint_text': config['api']['text'],
@@ -128,9 +128,9 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
                 'true' if config['service'].get('allow_change_signin_mode') else 'false',
             'allow_project_resource_monitor':
                 'true' if config['service']['allow_project_resource_monitor'] else 'false',
-            'license_edition': license_edition if license_edition is not None else 'Open Source',
-            'license_valid_since': license_valid_since if license_valid_since is not None else '',
-            'license_valid_until': license_valid_until if license_valid_until is not None else '',
+            'license_edition': license_edition,
+            'license_valid_since': license_valid_since,
+            'license_valid_until': license_valid_until,
         })
         return web.Response(text=config_content)
     # SECURITY: only allow reading files under static_path
