@@ -42,15 +42,13 @@ async def test_get_api_session(mocker):
     })
     mocker.patch('ai.backend.console.auth.get_session', mock_get_session)
     api_session = await get_api_session(mock_request)
-    try:
-        mock_get_session.assert_awaited_once()
+    mock_get_session.assert_awaited_once()
+    async with api_session:
         assert not api_session.config.is_anonymous
         assert api_session.config.domain == 'default'
         assert str(api_session.config.endpoint) == 'https://api.backend.ai'
         assert api_session.config.access_key == 'ABC'
         assert api_session.config.secret_key == 'xyz'
-    finally:
-        await api_session.close()
 
 
 @pytest.mark.asyncio
@@ -61,12 +59,10 @@ async def test_get_anonymous_session(mocker):
     mock_get_session = MagicMock()
     mocker.patch('ai.backend.console.auth.get_session', mock_get_session)
     api_session = await get_anonymous_session(mock_request)
-    try:
-        mock_get_session.assert_not_called()
+    mock_get_session.assert_not_called()
+    async with api_session:
         assert api_session.config.is_anonymous
         assert api_session.config.domain == 'default'
         assert str(api_session.config.endpoint) == 'https://api.backend.ai'
         assert api_session.config.access_key == ''
         assert api_session.config.secret_key == ''
-    finally:
-        await api_session.close()
