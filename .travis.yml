@@ -18,6 +18,17 @@ matrix:
 # test stage
 install:
   - pip install -U pip setuptools
+  - |
+    # Use the same branch (if exists) for the backend.ai-common installation
+    export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
+    git ls-remote --heads 'https://github.com/lablup/backend.ai-client-py' | grep -q "refs/heads/${BRANCH}"
+    if [ $? -eq 0 ]; then
+      sed -i "s%\(backend.ai-client-py\)@master%\1@${BRANCH}%" requirements/test.txt
+    fi
+    git ls-remote --heads 'https://github.com/lablup/backend.ai-common' | grep -q "refs/heads/${BRANCH}"
+    if [ $? -eq 0 ]; then
+      sed -i "s%\(backend.ai-common\)@master%\1@${BRANCH}%" requirements/test.txt
+    fi
   - pip install -U -r requirements/test.txt
 script:
   - python -m pytest --cov=ai.backend.console -v -m "not integration"

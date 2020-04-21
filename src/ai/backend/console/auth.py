@@ -37,7 +37,7 @@ async def get_api_session(request: web.Request) -> APISession:
         user_agent=user_agent,
         skip_sslcert_validation=not config['api'].get('ssl-verify', True),
     )
-    return APISession(config=config)
+    return APISession(config=config, proxy_mode=True)
 
 
 async def get_anonymous_session(request: web.Request) -> APISession:
@@ -50,4 +50,4 @@ async def get_anonymous_session(request: web.Request) -> APISession:
         user_agent=user_agent,
         skip_sslcert_validation=not config['api'].get('ssl-verify', True),
     )
-    return APISession(config=config)
+    return APISession(config=config, proxy_mode=True)
