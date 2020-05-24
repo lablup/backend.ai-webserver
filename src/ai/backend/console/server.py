@@ -159,7 +159,10 @@ cache_patterns = {
     },
     r'\.(?:css|js)$': {
         'Cache-Control': 'max-age=86400, public, must-revalidate, proxy-revalidate',
-    }
+    },
+    r'\.(?:py|log?|txt)$': {
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+    },
 }
 _cache_patterns = {re.compile(k): v for k, v in cache_patterns.items()}
 
