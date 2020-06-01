@@ -20,6 +20,10 @@ from .logging import BraceStyleAdapter
 
 log = BraceStyleAdapter(logging.getLogger('ai.backend.console.proxy'))
 
+HTTP_HEADERS_TO_FORWEARD = [
+    'Accept-Language',
+]
+
 
 class WebSocketProxy:
     __slots__ = (
@@ -126,6 +130,9 @@ async def web_handler(request, *, is_anonymous=False) -> web.StreamResponse:
             api_rqst.headers['Content-Type'] = request.headers['Content-Type']  # preserve raw value
         if 'Content-Length' in request.headers:
             api_rqst.headers['Content-Length'] = request.headers['Content-Length']
+        for hdr in HTTP_HEADERS_TO_FORWEARD:
+            if request.headers.get(hdr) is not None:
+                api_rqst.headers[hdr] = request.headers[hdr]
         # Uploading request body happens at the entering of the block,
         # and downloading response body happens in the read loop inside.
         async with api_rqst.fetch() as up_resp:
@@ -186,6 +193,9 @@ async def web_plugin_handler(request, *, is_anonymous=False) -> web.StreamRespon
             api_session, request.method, path, content,
             params=request.query,
             content_type=request.content_type)
+        for hdr in HTTP_HEADERS_TO_FORWEARD:
+            if request.headers.get(hdr) is not None:
+                api_rqst.headers[hdr] = request.headers[hdr]
         # Uploading request body happens at the entering of the block,
         # and downloading response body happens in the read loop inside.
         async with api_rqst.fetch() as up_resp:
@@ -245,6 +255,7 @@ async def websocket_handler(request, *, is_anonymous=False) -> web.StreamRespons
         raise
     except BackendAPIError as e:
         return web.Response(body=json.dumps(e.data),
+                            content_type='application/problem+json',
                             status=e.status, reason=e.reason)
     except BackendClientError:
         log.exception('websocket_handler: BackendClientError')
