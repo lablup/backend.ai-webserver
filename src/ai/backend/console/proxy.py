@@ -205,6 +205,7 @@ async def web_plugin_handler(request, *, is_anonymous=False) -> web.StreamRespon
         raise
     except BackendAPIError as e:
         return web.Response(body=json.dumps(e.data),
+                            content_type='application/problem+json',
                             status=e.status, reason=e.reason)
     except BackendClientError:
         log.exception('web_plugin_handler: BackendClientError')

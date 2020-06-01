@@ -299,6 +299,8 @@ async def server_main(loop, pidx, args):
     cors.add(app.router.add_route('POST', '/server/login-check', login_check_handler))
     cors.add(app.router.add_route('POST', '/server/logout', logout_handler))
     cors.add(app.router.add_route('GET', '/func/{path:hanati/user}', anon_web_plugin_handler))
+    cors.add(app.router.add_route('GET', '/func/{path:cloud/.*$}', anon_web_plugin_handler))
+    cors.add(app.router.add_route('POST', '/func/{path:cloud/.*$}', anon_web_plugin_handler))
     cors.add(app.router.add_route('POST', '/func/{path:auth/signup}', anon_web_plugin_handler))
     cors.add(app.router.add_route('POST', '/func/{path:auth/signout}', web_handler))
     cors.add(app.router.add_route('GET', '/func/{path:stream/kernel/_/events}', web_handler))
