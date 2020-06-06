@@ -61,6 +61,7 @@ siteDescription = "{{site_description}}"
 connectionMode = "SESSION"
 signupSupport = {{signup_support}}
 allowChangeSigninMode = {{allow_change_signin_mode}}
+allowAnonymousChangePassword = {{allow_anonymous_change_password}}
 allowProjectResourceMonitor  = {{allow_project_resource_monitor}}
 
 [wsproxy]
@@ -124,6 +125,8 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'signup_support': 'true' if config['service']['enable_signup'] else 'false',
             'allow_change_signin_mode':
                 'true' if config['service'].get('allow_change_signin_mode') else 'false',
+            'allow_anonymous_change_password':
+                'true' if config['service'].get('allow_anonymous_change_password') else 'false',
             'allow_project_resource_monitor':
                 'true' if config['service']['allow_project_resource_monitor'] else 'false',
             'license_edition': license_edition if license_edition is not None else 'Open Source',
