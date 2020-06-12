@@ -64,6 +64,9 @@ allowChangeSigninMode = {{allow_change_signin_mode}}
 allowAnonymousChangePassword = {{allow_anonymous_change_password}}
 allowProjectResourceMonitor  = {{allow_project_resource_monitor}}
 
+[menu]
+blocklist = "{{menu_blocklist}}"
+
 [wsproxy]
 proxyURL = "{{proxy_url}}/"
 #proxyBaseURL =
@@ -129,6 +132,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
                 'true' if config['service'].get('allow_anonymous_change_password') else 'false',
             'allow_project_resource_monitor':
                 'true' if config['service']['allow_project_resource_monitor'] else 'false',
+            'menu_blocklist': config['ui'].get('menu_blocklist'),
             'license_edition': license_edition if license_edition is not None else 'Open Source',
             'license_valid_since': license_valid_since if license_valid_since is not None else '',
             'license_valid_until': license_valid_until if license_valid_until is not None else '',
