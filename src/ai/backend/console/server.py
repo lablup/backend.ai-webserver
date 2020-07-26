@@ -192,6 +192,7 @@ async def login_check_handler(request: web.Request) -> web.Response:
         public_data = {
             'access_key': stored_token['access_key'],
             'role': stored_token['role'],
+            'status': stored_token.get('status'),
         }
     return web.json_response({
         'authenticated': authenticated,
@@ -239,10 +240,12 @@ async def login_handler(request: web.Request) -> web.Response:
                 'access_key': token.content['access_key'],
                 'secret_key': token.content['secret_key'],
                 'role': token.content['role'],
+                'status': token.content.get('status'),
             }
             public_return = {
                 'access_key': token.content['access_key'],
                 'role': token.content['role'],
+                'status': token.content.get('status'),
             }
             session['authenticated'] = True
             session['token'] = stored_token  # store full token
@@ -257,6 +260,11 @@ async def login_handler(request: web.Request) -> web.Response:
     except BackendAPIError as e:
         log.info('Authorization failed for {}: {}', creds['username'], e)
         result['authenticated'] = False
+        result['data'] = {
+            'type': e.data.get('type'),
+            'title': e.data.get('title'),
+            'details': e.data.get('msg'),
+        }
         session['authenticated'] = False
     return web.json_response(result)
 
