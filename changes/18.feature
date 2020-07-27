@@ -1,1 +1,0 @@
-Add allowAnonymousChangePassword option for console
