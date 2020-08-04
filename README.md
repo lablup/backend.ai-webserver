@@ -41,7 +41,7 @@ To download and deploy console from pre-built source, do the following:
 git submodule init
 git submodule update
 cd src/ai/backend/console/static
-git checkout master
+git checkout main  # or target branch
 git fetch
 git pull
 ```
