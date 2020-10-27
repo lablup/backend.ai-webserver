@@ -16,6 +16,16 @@ Changes
 
 .. towncrier release notes start
 
+20.03.1 (2020-10-27)
+--------------------
+
+### Features
+* Add option to enable/disable open port to public checkbox. ([#22](https://github.com/lablup/backend.ai-console-server/issues/22))
+
+### Fixes
+* Update dependencies (aiohttp 3.7, client SDK 20.03.8, etc.) which enables use of `SameSite` cookies ([#23](https://github.com/lablup/backend.ai-console-server/issues/23))
+
+
 20.03.0 (2020-07-28)
 --------------------
 
