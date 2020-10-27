@@ -1,0 +1,1 @@
+Update dependencies (aiohttp 3.7, etc.) which enables use of `SameSite` cookies
