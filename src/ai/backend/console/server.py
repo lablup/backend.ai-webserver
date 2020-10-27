@@ -64,7 +64,8 @@ connectionMode = "SESSION"
 signupSupport = {{signup_support}}
 allowChangeSigninMode = {{allow_change_signin_mode}}
 allowAnonymousChangePassword = {{allow_anonymous_change_password}}
-allowProjectResourceMonitor  = {{allow_project_resource_monitor}}
+allowProjectResourceMonitor = {{allow_project_resource_monitor}}
+openPortToPublic = {{open_port_to_public}}
 
 [menu]
 blocklist = "{{menu_blocklist}}"
@@ -134,6 +135,8 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
                 'true' if config['service'].get('allow_anonymous_change_password') else 'false',
             'allow_project_resource_monitor':
                 'true' if config['service']['allow_project_resource_monitor'] else 'false',
+            'open_port_to_public':
+                'true' if config['service']['open_port_to_public'] else 'false',
             'menu_blocklist': config['ui'].get('menu_blocklist', ''),
             'license_edition': license_edition,
             'license_valid_since': license_valid_since,
