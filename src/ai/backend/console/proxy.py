@@ -128,7 +128,7 @@ async def web_handler(request, *, is_anonymous=False) -> web.StreamResponse:
             # We treat all requests and responses as streaming universally
             # to be a transparent proxy.
             api_rqst = Request(
-                api_session, request.method, path, request.content,
+                request.method, path, request.content,
                 params=request.query,
                 override_api_version=request_api_version)
             if 'Content-Type' in request.headers:
@@ -196,7 +196,7 @@ async def web_plugin_handler(request, *, is_anonymous=False) -> web.StreamRespon
                 content = json.dumps(body).encode('utf8')
             request_api_version = request.headers.get('X-BackendAI-Version', None)
             api_rqst = Request(
-                api_session, request.method, path, content,
+                request.method, path, content,
                 params=request.query,
                 content_type=request.content_type,
                 override_api_version=request_api_version)
@@ -247,7 +247,7 @@ async def websocket_handler(request, *, is_anonymous=False) -> web.StreamRespons
             request_api_version = request.headers.get('X-BackendAI-Version', None)
             params = request.query if request.query else None
             api_rqst = Request(
-                api_session, request.method, path, request.content,
+                request.method, path, request.content,
                 params=params,
                 content_type=request.content_type,
                 override_api_version=request_api_version)
