@@ -1,0 +1,1 @@
+Fix a 502 HTTP error returned when starting service ports via CLI in the session mode by excluding the `stream/session/{id}/apps` API from the websocket routes since it's a plain HTTP GET API.
