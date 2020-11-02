@@ -16,6 +16,13 @@ Changes
 
 .. towncrier release notes start
 
+20.09.0a3 (2020-11-03)
+----------------------
+
+### Fixes
+* Fix a 502 HTTP error returned when starting service ports via CLI in the session mode by excluding the `stream/session/{id}/apps` API from the websocket routes since it's a plain HTTP GET API. ([#27](https://github.com/lablup/backend.ai-console-server/issues/27))
+
+
 20.09.0a2 (2020-10-28)
 ----------------------
 
