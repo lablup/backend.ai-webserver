@@ -330,6 +330,7 @@ async def server_main(loop, pidx, args):
     cors.add(app.router.add_route('POST', '/func/{path:auth/signup}', anon_web_plugin_handler))
     cors.add(app.router.add_route('POST', '/func/{path:auth/signout}', web_handler))
     cors.add(app.router.add_route('GET', '/func/{path:stream/kernel/_/events}', web_handler))
+    cors.add(app.router.add_route('GET', '/func/{path:stream/session/[^/]+/apps$}', web_handler))
     cors.add(app.router.add_route('GET', '/func/{path:stream/.*$}', websocket_handler))
     cors.add(app.router.add_route('GET', '/func/', anon_web_handler))
     cors.add(app.router.add_route('HEAD', '/func/{path:.*$}', web_handler))
