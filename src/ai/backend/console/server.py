@@ -136,7 +136,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'allow_project_resource_monitor':
                 'true' if config['service']['allow_project_resource_monitor'] else 'false',
             'open_port_to_public':
-                'true' if config['service']['open_port_to_public'] else 'false',
+                'true' if config['service'].get('open_port_to_public') else 'false',
             'menu_blocklist': config['ui'].get('menu_blocklist', ''),
             'license_edition': license_edition,
             'license_valid_since': license_valid_since,
