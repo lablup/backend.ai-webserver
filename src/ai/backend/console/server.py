@@ -71,6 +71,7 @@ openPortToPublic = {{open_port_to_public}}
 maxCPUCoresPerSession = {{max_cpu_cores_per_session}}
 maxCUDADevicesPerSession = {{max_cuda_devices_per_session}}
 maxShmPerSession = {{max_shm_per_session}}
+maxFileUploadSize = {{max_file_upload_size}}
 
 [menu]
 blocklist = "{{menu_blocklist}}"
@@ -124,19 +125,26 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
         return web.Response(text=config_content)
 
     if request_path == 'config.toml':
-        license_edition = config['license'].get('edition', 'Open Source')
-        license_valid_since = config['license'].get('valid_since', '')
-        license_valid_until = config['license'].get('valid_until', '')
+        if 'license' in config:
+            license_edition = config['license'].get('edition', 'Open Source')
+            license_valid_since = config['license'].get('valid_since', '')
+            license_valid_until = config['license'].get('valid_until', '')
+        else:
+            license_edition = 'Open Source'
+            license_valid_since = ''
+            license_valid_until = ''
         if 'resources' in config:
             open_port_to_public = 'true' if config['resources'].get('open_port_to_public') else 'false'
             max_cpu_cores_per_session = config['resources'].get('max_cpu_cores_per_session', 64)
             max_cuda_devices_per_session = config['resources'].get('max_cuda_devices_per_session', 16)
             max_shm_per_session = config['resources'].get('max_shm_per_session', 2)
+            max_file_upload_size = config['resources'].get('max_file_upload_size', 4294967296)
         else:
             open_port_to_public = 'false'
             max_cpu_cores_per_session = 64
             max_cuda_devices_per_session = 16
             max_shm_per_session = 2
+            max_file_upload_size = 4294967296
         config_content = console_config_toml_template.render(**{
             'endpoint_url': f'{scheme}://{request.host}',  # must be absolute
             'endpoint_text': config['api']['text'],
@@ -154,6 +162,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'max_cpu_cores_per_session': max_cpu_cores_per_session,
             'max_cuda_devices_per_session': max_cuda_devices_per_session,
             'max_shm_per_session': max_shm_per_session,
+            'max_file_upload_size': max_file_upload_size,
             'menu_blocklist': config['ui'].get('menu_blocklist', ''),
             'license_edition': license_edition,
             'license_valid_since': license_valid_since,
