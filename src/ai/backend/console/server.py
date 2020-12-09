@@ -5,9 +5,11 @@ import json
 import os
 from pathlib import Path
 import pkg_resources
+from pprint import pprint
 import re
 import ssl
 import sys
+import time
 from typing import (
     Any, MutableMapping,
 )
@@ -239,12 +241,12 @@ async def login_handler(request: web.Request) -> web.Response:
             'title': 'You have already logged in.',
         }), content_type='application/problem+json')
     creds = await request.json()
-    if 'username' not in creds:
+    if 'username' not in creds or not creds['username']:
         return web.HTTPBadRequest(text=json.dumps({
             'type': 'https://api.backend.ai/probs/invalid-api-params',
             'title': 'You must provide the username field.',
         }), content_type='application/problem+json')
-    if 'password' not in creds:
+    if 'password' not in creds or not creds['password']:
         return web.HTTPBadRequest(text=json.dumps({
             'type': 'https://api.backend.ai/probs/invalid-api-params',
             'title': 'You must provide the password field.',
@@ -254,6 +256,50 @@ async def login_handler(request: web.Request) -> web.Response:
         'data': None,
     }
     try:
+        async def _get_login_history():
+            login_history = await request.app['redis'].execute(
+                'get', f'login_history_{creds["username"]}'
+            )
+            if not login_history:
+                login_history = {
+                    'last_login_attempt': 0,
+                    'login_fail_count': 0,
+                }
+            else:
+                login_history = json.loads(login_history)
+            return login_history
+
+        async def _set_login_history(last_login_attempt, login_fail_count):
+            """
+            Set login history per email (not in browser session).
+            """
+            key = f'login_history_{creds["username"]}'
+            value = json.dumps({
+                'last_login_attempt': last_login_attempt,
+                'login_fail_count': login_fail_count,
+            })
+            await request.app['redis'].execute('set', key, value)
+
+        # Block login if there are too many consecutive failed login attempts.
+        BLOCK_TIME = config['session'].get('login_block_time', 1200)
+        ALLOWED_FAIL_COUNT = config['session'].get('login_allowed_fail_count', 10)
+        login_time = time.time()
+        login_history = await _get_login_history()
+        last_login_attempt = login_history.get('last_login_attempt', 0)
+        login_fail_count = login_history.get('login_fail_count', 0)
+        if login_time - last_login_attempt > BLOCK_TIME:
+            # If last attempt is far past, allow login again.
+            login_fail_count = 0
+        last_login_attempt = login_time
+        if login_fail_count >= ALLOWED_FAIL_COUNT:
+            log.info('Too many consecutive login attempts for {}: {}',
+                     creds['username'], login_fail_count)
+            await _set_login_history(last_login_attempt, login_fail_count)
+            return web.HTTPTooManyRequests(text=json.dumps({
+                'type': 'https://api.backend.ai/probs/too-many-requests',
+                'title': 'Too many failed login attempts',
+            }), content_type='application/problem+json')
+
         anon_api_config = APIConfig(
             domain=config['api']['domain'],
             endpoint=config['api']['endpoint'],
@@ -280,7 +326,10 @@ async def login_handler(request: web.Request) -> web.Response:
             session['token'] = stored_token  # store full token
             result['authenticated'] = True
             result['data'] = public_return  # store public info from token
+            login_fail_count = 0
+            await _set_login_history(last_login_attempt, login_fail_count)
     except BackendClientError as e:
+        # This is error, not failed login, so we should not update login history.
         return web.HTTPBadGateway(text=json.dumps({
             'type': 'https://api.backend.ai/probs/bad-gateway',
             'title': "The proxy target server is inaccessible.",
@@ -295,6 +344,8 @@ async def login_handler(request: web.Request) -> web.Response:
             'details': e.data.get('msg'),
         }
         session['authenticated'] = False
+        login_fail_count += 1
+        await _set_login_history(last_login_attempt, login_fail_count)
     return web.json_response(result)
 
 
@@ -457,6 +508,8 @@ def main(config, debug):
     log.info('runtime: {0}', sys.prefix)
     log_config = logging.getLogger('ai.backend.console.config')
     log_config.debug('debug mode enabled.')
+    print('== Console Server configuration ==')
+    pprint(config)
     log.info('serving at {0}:{1}', config['service']['ip'], config['service']['port'])
 
     try:
