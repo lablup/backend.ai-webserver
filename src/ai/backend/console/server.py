@@ -267,6 +267,10 @@ async def login_handler(request: web.Request) -> web.Response:
                 }
             else:
                 login_history = json.loads(login_history)
+            if login_history['last_login_attempt'] < 0:
+                login_history['last_login_attempt'] = 0
+            if login_history['login_fail_count'] < 0:
+                login_history['login_fail_count'] = 0
             return login_history
 
         async def _set_login_history(last_login_attempt, login_fail_count):
