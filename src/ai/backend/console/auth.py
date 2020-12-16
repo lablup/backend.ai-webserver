@@ -1,3 +1,4 @@
+import copy
 import json
 
 from aiohttp import web
@@ -9,8 +10,14 @@ from ai.backend.client.config import APIConfig
 from . import user_agent
 
 
-async def get_api_session(request: web.Request) -> APISession:
+async def get_api_session(
+    request: web.Request,
+    api_endpoint: str = None,
+) -> APISession:
     config = request.app['config']
+    if api_endpoint is not None:
+        config = copy.deepcopy(config)
+        config['api']['endpoint'] = api_endpoint
     session = await get_session(request)
     if not session.get('authenticated', False):
         raise web.HTTPUnauthorized(text=json.dumps({
@@ -40,8 +47,14 @@ async def get_api_session(request: web.Request) -> APISession:
     return APISession(config=config, proxy_mode=True)
 
 
-async def get_anonymous_session(request: web.Request) -> APISession:
+async def get_anonymous_session(
+    request: web.Request,
+    api_endpoint: str = None,
+) -> APISession:
     config = request.app['config']
+    if api_endpoint is not None:
+        config = copy.deepcopy(config)
+        config['api']['endpoint'] = api_endpoint
     config = APIConfig(
         domain=config['api']['domain'],
         endpoint=config['api']['endpoint'],

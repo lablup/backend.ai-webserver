@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import json
+import random
 from typing import (
     Optional, Union,
     Tuple,
@@ -11,6 +12,7 @@ from typing import (
 
 import aiohttp
 from aiohttp import web
+from aiohttp_session import get_session, STORAGE_KEY
 
 from ai.backend.client.exceptions import BackendAPIError, BackendClientError
 from ai.backend.client.request import Request
@@ -238,10 +240,26 @@ async def web_plugin_handler(request, *, is_anonymous=False) -> web.StreamRespon
 
 async def websocket_handler(request, *, is_anonymous=False) -> web.StreamResponse:
     path = request.match_info['path']
-    if is_anonymous:
-        api_session = await asyncio.shield(get_anonymous_session(request))
+    session = await get_session(request)
+    app = request.query.get('app')
+
+    # Choose a specific Manager endpoint for persistent web app connection.
+    api_endpoint = None
+    should_save_session = False
+    if session.get('api_endpoints', {}).get(app):
+        api_endpoint = session['api_endpoints'][app]
     else:
-        api_session = await asyncio.shield(get_api_session(request))
+        _endpoints = request.app['config']['api']['endpoint']
+        api_endpoint = random.choice(_endpoints.split(',')).strip()
+        if 'api_endpoints' not in session:
+            session['api_endpoints'] = {}
+        session['api_endpoints'][app] = api_endpoint
+        should_save_session = True
+
+    if is_anonymous:
+        api_session = await asyncio.shield(get_anonymous_session(request, api_endpoint))
+    else:
+        api_session = await asyncio.shield(get_api_session(request, api_endpoint))
     try:
         async with api_session:
             request_api_version = request.headers.get('X-BackendAI-Version', None)
@@ -256,6 +274,9 @@ async def websocket_handler(request, *, is_anonymous=False) -> web.StreamRespons
                 await down_conn.prepare(request)
                 web_socket_proxy = WebSocketProxy(up_conn.raw_websocket, down_conn)
                 await web_socket_proxy.proxy()
+                if should_save_session:
+                    storage = request.get(STORAGE_KEY)
+                    await storage.save_session(request, down_conn, session)
                 return down_conn
     except asyncio.CancelledError:
         raise
