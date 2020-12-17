@@ -246,11 +246,13 @@ async def websocket_handler(request, *, is_anonymous=False) -> web.StreamRespons
     # Choose a specific Manager endpoint for persistent web app connection.
     api_endpoint = None
     should_save_session = False
+    _endpoints = request.app['config']['api']['endpoint'].split(',')
+    _endpoints = [e.strip() for e in _endpoints]
     if session.get('api_endpoints', {}).get(app):
-        api_endpoint = session['api_endpoints'][app]
-    else:
-        _endpoints = request.app['config']['api']['endpoint']
-        api_endpoint = random.choice(_endpoints.split(',')).strip()
+        if session['api_endpoints'][app] in _endpoints:
+            api_endpoint = session['api_endpoints'][app]
+    if api_endpoint is None:
+        api_endpoint = random.choice(_endpoints)
         if 'api_endpoints' not in session:
             session['api_endpoints'] = {}
         session['api_endpoints'][app] = api_endpoint
