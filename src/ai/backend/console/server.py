@@ -153,8 +153,8 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             max_cuda_devices_per_session = 16
             max_shm_per_session = 2
             max_file_upload_size = 4294967296
-        if 'plugins' in config:
-            console_menu_plugins = config['plugins'].get('page', '')
+        if 'plugin' in config:
+            console_menu_plugins = config['plugin'].get('page', '')
         else:
             console_menu_plugins = False
         config_content = console_config_toml_template.render(**{
