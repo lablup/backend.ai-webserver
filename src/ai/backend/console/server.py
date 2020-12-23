@@ -67,6 +67,7 @@ signupSupport = {{signup_support}}
 allowChangeSigninMode = {{allow_change_signin_mode}}
 allowAnonymousChangePassword = {{allow_anonymous_change_password}}
 allowProjectResourceMonitor = {{allow_project_resource_monitor}}
+autoLogout = {{auto_logout}}
 
 [resources]
 openPortToPublic = {{open_port_to_public}}
@@ -78,6 +79,11 @@ maxFileUploadSize = {{max_file_upload_size}}
 [menu]
 blocklist = "{{menu_blocklist}}"
 
+{% if console_menu_plugins %}
+[plugin]
+page = "{{console_menu_plugins}}"
+
+{% endif %}
 [wsproxy]
 proxyURL = "{{proxy_url}}/"
 #proxyBaseURL =
@@ -147,6 +153,10 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             max_cuda_devices_per_session = 16
             max_shm_per_session = 2
             max_file_upload_size = 4294967296
+        if 'plugin' in config:
+            console_menu_plugins = config['plugin'].get('page', '')
+        else:
+            console_menu_plugins = False
         config_content = console_config_toml_template.render(**{
             'endpoint_url': f'{scheme}://{request.host}',  # must be absolute
             'endpoint_text': config['api']['text'],
@@ -160,12 +170,15 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
                 'true' if config['service'].get('allow_anonymous_change_password') else 'false',
             'allow_project_resource_monitor':
                 'true' if config['service']['allow_project_resource_monitor'] else 'false',
+            'auto_logout':
+                'true' if config['service'].get('auto_logout') else 'false',
             'open_port_to_public': open_port_to_public,
             'max_cpu_cores_per_session': max_cpu_cores_per_session,
             'max_cuda_devices_per_session': max_cuda_devices_per_session,
             'max_shm_per_session': max_shm_per_session,
             'max_file_upload_size': max_file_upload_size,
             'menu_blocklist': config['ui'].get('menu_blocklist', ''),
+            'console_menu_plugins': console_menu_plugins,
             'license_edition': license_edition,
             'license_valid_since': license_valid_since,
             'license_valid_until': license_valid_until,
