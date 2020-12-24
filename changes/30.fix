@@ -1,0 +1,1 @@
+Use persistent manager endpoint for websocket streaming (app) per session and per app by storing the endpoint information in the browser session.
