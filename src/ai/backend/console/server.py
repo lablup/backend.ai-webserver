@@ -61,6 +61,9 @@ apiEndpointText = "{{endpoint_text}}"
 {% if default_environment %}
 defaultSessionEnvironment = "{{default_environment}}"
 {% endif %}
+{% if default_import_environment %}
+defaultImportEnvironment = "{{default_import_environment}}"
+{% endif %}
 siteDescription = "{{site_description}}"
 connectionMode = "SESSION"
 signupSupport = {{signup_support}}
@@ -162,6 +165,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'endpoint_text': config['api']['text'],
             'site_description': config['ui']['brand'],
             'default_environment': config['ui'].get('default_environment'),
+            'default_import_environment': config['ui'].get('default_import_environment'),
             'proxy_url': config['service']['wsproxy']['url'],
             'signup_support': 'true' if config['service']['enable_signup'] else 'false',
             'allow_change_signin_mode':
