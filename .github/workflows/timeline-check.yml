@@ -1,9 +1,9 @@
-name: Check existence of news fragment
+name: timeline-check
 
 on: [pull_request]
 
 jobs:
-  lint-towncrier:
+  towncrier:
 
     runs-on: ubuntu-latest
 
@@ -11,7 +11,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
-    - name: Set up Python 3.8
+    - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
