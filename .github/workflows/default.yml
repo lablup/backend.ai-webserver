@@ -80,11 +80,11 @@ jobs:
         set +e
         git ls-remote --heads 'https://github.com/lablup/backend.ai-client-py' | grep -q "refs/heads/${GHBRANCH}"
         if [ $? -eq 0 ]; then
-          sed -i "s%\(backend.ai-client-py\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/lint.txt
+          sed -i "s%\(backend.ai-client-py\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/typecheck.txt
         fi
         git ls-remote --heads 'https://github.com/lablup/backend.ai-common' | grep -q "refs/heads/${GHBRANCH}"
         if [ $? -eq 0 ]; then
-          sed -i "s%\(backend.ai-common\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/lint.txt
+          sed -i "s%\(backend.ai-common\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/typecheck.txt
         fi
         set -e
         python -m pip install -U -r requirements/typecheck.txt
@@ -127,11 +127,11 @@ jobs:
         set +e
         git ls-remote --heads 'https://github.com/lablup/backend.ai-client-py' | grep -q "refs/heads/${GHBRANCH}"
         if [ $? -eq 0 ]; then
-          sed -i "s%\(backend.ai-client-py\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/lint.txt
+          sed -i "s%\(backend.ai-client-py\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/test.txt
         fi
         git ls-remote --heads 'https://github.com/lablup/backend.ai-common' | grep -q "refs/heads/${GHBRANCH}"
         if [ $? -eq 0 ]; then
-          sed -i "s%\(backend.ai-common\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/lint.txt
+          sed -i "s%\(backend.ai-common\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/test.txt
         fi
         set -e
         python -m pip install -U -r requirements/test.txt
