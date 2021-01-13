@@ -538,7 +538,6 @@ def main(config, debug):
         aiotools.start_server(
             server_main,
             num_workers=min(4, os.cpu_count()),
-            start_method='fork',
             args=(config,),
         )
     finally:
