@@ -147,7 +147,8 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
         if 'resources' in config:
             open_port_to_public = 'true' if config['resources'].get('open_port_to_public') else 'false'
             max_cpu_cores_per_container = config['resources'].get('max_cpu_cores_per_container', 64)
-            max_cuda_devices_per_container = config['resources'].get('max_cuda_devices_per_container', 16)
+            max_cuda_devices_per_container = config['resources'].get('max_cuda_devices_per_container',
+                    16)
             max_shm_per_container = config['resources'].get('max_shm_per_container', 2)
             max_file_upload_size = config['resources'].get('max_file_upload_size', 4294967296)
         else:
