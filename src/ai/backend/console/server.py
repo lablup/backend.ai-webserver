@@ -76,6 +76,7 @@ autoLogout = {{auto_logout}}
 openPortToPublic = {{open_port_to_public}}
 maxCPUCoresPerContainer = {{max_cpu_cores_per_container}}
 maxCUDADevicesPerContainer = {{max_cuda_devices_per_container}}
+maxCUDASharesPerContainer = {{max_cuda_shares_per_container}}
 maxShmPerContainer = {{max_shm_per_container}}
 maxFileUploadSize = {{max_file_upload_size}}
 
@@ -149,12 +150,15 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             max_cpu_cores_per_container = config['resources'].get('max_cpu_cores_per_container', 64)
             max_cuda_devices_per_container = config['resources'].get(
                     'max_cuda_devices_per_container', 16)
+            max_cuda_shares_per_container = config['resources'].get(
+                    'max_cuda_shares_per_container', 16)
             max_shm_per_container = config['resources'].get('max_shm_per_container', 2)
             max_file_upload_size = config['resources'].get('max_file_upload_size', 4294967296)
         else:
             open_port_to_public = 'false'
             max_cpu_cores_per_container = 64
             max_cuda_devices_per_container = 16
+            max_cuda_shares_per_container = 16
             max_shm_per_container = 2
             max_file_upload_size = 4294967296
         if 'plugin' in config:
@@ -180,6 +184,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'open_port_to_public': open_port_to_public,
             'max_cpu_cores_per_container': max_cpu_cores_per_container,
             'max_cuda_devices_per_container': max_cuda_devices_per_container,
+            'max_cuda_shares_per_container': max_cuda_shares_per_container,
             'max_shm_per_container': max_shm_per_container,
             'max_file_upload_size': max_file_upload_size,
             'menu_blocklist': config['ui'].get('menu_blocklist', ''),
