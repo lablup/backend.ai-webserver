@@ -1,6 +1,6 @@
-# backend.ai-console-server
+# backend.ai-webserver
 
-A minimal webapp to convert web session requests to API requests
+A minimal webapp to convert web session requests to API requests.
 
 
 ## Installation
