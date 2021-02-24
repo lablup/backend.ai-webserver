@@ -8,10 +8,10 @@ A minimal webapp to convert web session requests to API requests.
 Prepare a Python virtualenv (Python 3.7 or higher) and a Redis server (5.0 or higher).
 
 ```console
-$ git clone https://github.com/lablup/backend.ai-console-server console-server
-$ cd console-server
+$ git clone https://github.com/lablup/backend.ai-webserver webserver
+$ cd webserver
 $ pip install -U -e .
-$ cp console-server.sample.conf console-server.conf
+$ cp webserver.sample.conf webserver.conf
 ```
 
 ## Mode
@@ -45,7 +45,7 @@ git checkout main  # or target branch
 git fetch
 git pull
 ```
-### Setup configuration for console-server
+### Setup configuration for webserver
 
 You don't have to write `config.toml` for the console as this console server auto-generates it on-the-fly.
 
