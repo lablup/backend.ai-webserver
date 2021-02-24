@@ -484,7 +484,7 @@ async def server_main(loop, pidx, args):
 
 @click.command()
 @click.option('-f', '--config', type=click.Path(exists=True),
-              default='console-server.conf',
+              default='webserver.conf',
               help='The configuration file to use.')
 @click.option('--debug', is_flag=True,
               default=False,
@@ -496,7 +496,7 @@ def main(config, debug):
         debugFlag = 'DEBUG'
     else:
         debugFlag = 'INFO'
-    setproctitle(f"backend.ai: console-server "
+    setproctitle(f"backend.ai: webserver "
                  f"{config['service']['ip']}:{config['service']['port']}")
 
     logging.config.dictConfig({
