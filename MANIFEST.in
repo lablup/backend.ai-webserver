@@ -1,1 +1,1 @@
-recursive-include src/ai/backend/console/static *
+recursive-include src/ai/backend/web/static *
