@@ -22,7 +22,7 @@ async def test_get_api_session(mocker):
     mock_get_session = AsyncMock(return_value={
         'authenticated': False
     })
-    mocker.patch('ai.backend.console.auth.get_session', mock_get_session)
+    mocker.patch('ai.backend.web.auth.get_session', mock_get_session)
     with pytest.raises(web.HTTPUnauthorized):
         await get_api_session(mock_request)
     mock_get_session.assert_awaited_once()
