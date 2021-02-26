@@ -7,7 +7,7 @@ A minimal webapp to convert web session requests to API requests.
 
 Prepare a Python virtualenv (Python 3.7 or higher) and a Redis server (5.0 or higher).
 
-```webserver
+```console
 $ git clone https://github.com/lablup/backend.ai-webserver webserver
 $ cd webserver
 $ pip install -U -e .
@@ -37,7 +37,7 @@ into the `src/ai/backend/web/static` directory.
 
 To download and deploy web UI from pre-built source, do the following:
 
-```web UI
+```console
 git submodule init
 git submodule update
 cd src/ai/backend/web/static
@@ -54,6 +54,9 @@ Edit `webserver.conf` to match with your environment.
 
 ## Usage
 
+To execute web server, run command below. (for debugging, append a `--debug` flag)
+
+
 ```console
-$ python -m ai.backend.console.server
+$ python -m ai.backend.web.server
 ```
