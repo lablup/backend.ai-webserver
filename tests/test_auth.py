@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, AsyncMock
 
 from aiohttp import web
 
-from ai.backend.console.auth import get_api_session, get_anonymous_session
+from ai.backend.web.auth import get_api_session, get_anonymous_session
 
 
 class DummyRequest:
@@ -22,7 +22,7 @@ async def test_get_api_session(mocker):
     mock_get_session = AsyncMock(return_value={
         'authenticated': False
     })
-    mocker.patch('ai.backend.console.auth.get_session', mock_get_session)
+    mocker.patch('ai.backend.web.auth.get_session', mock_get_session)
     with pytest.raises(web.HTTPUnauthorized):
         await get_api_session(mock_request)
     mock_get_session.assert_awaited_once()
@@ -31,7 +31,7 @@ async def test_get_api_session(mocker):
         'authenticated': True,
         'token': {'type': 'something-else', },
     })
-    mocker.patch('ai.backend.console.auth.get_session', mock_get_session)
+    mocker.patch('ai.backend.web.auth.get_session', mock_get_session)
     with pytest.raises(web.HTTPBadRequest):
         await get_api_session(mock_request)
     mock_get_session.assert_awaited_once()
@@ -40,7 +40,7 @@ async def test_get_api_session(mocker):
         'authenticated': True,
         'token': {'type': 'keypair', 'access_key': 'ABC', 'secret_key': 'xyz'},
     })
-    mocker.patch('ai.backend.console.auth.get_session', mock_get_session)
+    mocker.patch('ai.backend.web.auth.get_session', mock_get_session)
     api_session = await get_api_session(mock_request)
     mock_get_session.assert_awaited_once()
     async with api_session:
@@ -61,7 +61,7 @@ async def test_get_api_session_with_specific_api_endpoint(mocker):
         'token': {'type': 'keypair', 'access_key': 'ABC', 'secret_key': 'xyz'},
     })
     specific_api_endpoint = 'https://alternative.backend.ai'
-    mocker.patch('ai.backend.console.auth.get_session', mock_get_session)
+    mocker.patch('ai.backend.web.auth.get_session', mock_get_session)
     api_session = await get_api_session(mock_request, specific_api_endpoint)
     mock_get_session.assert_awaited_once()
     async with api_session:
@@ -74,7 +74,7 @@ async def test_get_anonymous_session(mocker):
         'api': {'domain': 'default', 'endpoint': 'https://api.backend.ai'},
     }})
     mock_get_session = MagicMock()
-    mocker.patch('ai.backend.console.auth.get_session', mock_get_session)
+    mocker.patch('ai.backend.web.auth.get_session', mock_get_session)
     api_session = await get_anonymous_session(mock_request)
     mock_get_session.assert_not_called()
     async with api_session:
@@ -92,7 +92,7 @@ async def test_get_anonymous_session_with_specific_api_endpoint(mocker):
     }})
     specific_api_endpoint = 'https://alternative.backend.ai'
     mock_get_session = MagicMock()
-    mocker.patch('ai.backend.console.auth.get_session', mock_get_session)
+    mocker.patch('ai.backend.web.auth.get_session', mock_get_session)
     api_session = await get_anonymous_session(mock_request, specific_api_endpoint)
     mock_get_session.assert_not_called()
     async with api_session:

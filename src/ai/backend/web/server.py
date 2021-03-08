@@ -34,9 +34,8 @@ from . import __version__, user_agent
 from .logging import BraceStyleAdapter
 from .proxy import web_handler, websocket_handler, web_plugin_handler
 
-log = BraceStyleAdapter(logging.getLogger('ai.backend.console.server'))
-
-static_path = Path(pkg_resources.resource_filename('ai.backend.console', 'static')).resolve()
+log = BraceStyleAdapter(logging.getLogger('ai.backend.web.server'))
+static_path = Path(pkg_resources.resource_filename('ai.backend.web', 'static')).resolve()
 assert static_path.is_dir()
 
 
@@ -212,7 +211,7 @@ cache_patterns = {
     r'\.(?:manifest|appcache|html?|xml|json|ini|toml)$': {
         'Cache-Control': 'no-store'
     },
-    r'(?:backend.ai-console.js)$': {
+    r'(?:backend.ai-webui.js)$': {
         'Cache-Control': 'no-store'
     },
     r'\.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc|woff|woff2)$': {
@@ -443,7 +442,7 @@ async def server_main(loop, pidx, args):
     cors.add(app.router.add_route('POST', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('PATCH', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('DELETE', '/func/{path:.*$}', web_handler))
-    if config['service']['mode'] == 'webconsole':
+    if config['service']['mode'] == 'webui':
         fallback_handler = console_handler
     elif config['service']['mode'] == 'static':
         fallback_handler = static_handler
@@ -531,11 +530,11 @@ def main(config, debug):
             },
         },
     })
-    log.info('Backend.AI Console Server {0}', __version__)
+    log.info('Backend.AI Web Server {0}', __version__)
     log.info('runtime: {0}', sys.prefix)
-    log_config = logging.getLogger('ai.backend.console.config')
+    log_config = logging.getLogger('ai.backend.web.config')
     log_config.debug('debug mode enabled.')
-    print('== Console Server configuration ==')
+    print('== Web Server configuration ==')
     pprint(config)
     log.info('serving at {0}:{1}', config['service']['ip'], config['service']['port'])
 
