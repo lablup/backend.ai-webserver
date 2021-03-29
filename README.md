@@ -1,11 +1,11 @@
-# backend.ai-webserver
+# Backend.AI Web Server
 
-A minimal webapp to convert web session requests to API requests.
+A webapp hosting daemon which serves our `webui` as a SPA and proxies API requests
 
 
 ## Installation
 
-Prepare a Python virtualenv (Python 3.7 or higher) and a Redis server (5.0 or higher).
+Prepare a Python virtualenv (Python 3.9 or higher) and a Redis server (6.2 or higher).
 
 ```console
 $ git clone https://github.com/lablup/backend.ai-webserver webserver
