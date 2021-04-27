@@ -118,9 +118,11 @@ class WebSocketProxy:
 async def web_handler(request, *, is_anonymous=False) -> web.StreamResponse:
     path = request.match_info.get('path', '')
     # NOTE: Transparently pass token-based requests.
-    #       To distinguish the requested from client edu-API, only get
-    #       token-based session when harded-coded _backendai-edu-launcher
-    #       cookie is delivered per request.
+    #       To distinguish the request from client edu-API, the client should
+    #       provide an additional cookie named _backendai-edu-launcher with the
+    #       value of 1. For token-based request, spawn a client session
+    #       (anonymous), and send the request transparently along with
+    #       client-delivered cookie.
     #       This should be removed when official EDU launcher API is developed.
     config = request.app['config']
     auth_token_name = config['api'].get('auth_token_name')
