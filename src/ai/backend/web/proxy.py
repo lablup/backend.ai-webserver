@@ -117,7 +117,17 @@ class WebSocketProxy:
 
 async def web_handler(request, *, is_anonymous=False) -> web.StreamResponse:
     path = request.match_info.get('path', '')
-    if is_anonymous:
+    # NOTE: Transparently pass token-based requests.
+    #       To distinguish the requested from client edu-API, only get
+    #       token-based session when harded-coded _backendai-edu-launcher
+    #       cookie is delivered per request.
+    #       This should be removed when official EDU launcher API is developed.
+    config = request.app['config']
+    auth_token_name = config['api'].get('auth_token_name')
+    token = request.cookies.get(auth_token_name) if auth_token_name else None
+    from_edu_launcher = request.cookies.get('_backendai-edu-launcher')
+    use_token_auth_session = token and from_edu_launcher == '1'
+    if is_anonymous or use_token_auth_session:
         api_session = await asyncio.shield(get_anonymous_session(request))
     else:
         api_session = await asyncio.shield(get_api_session(request))
@@ -143,6 +153,9 @@ async def web_handler(request, *, is_anonymous=False) -> web.StreamResponse:
                     api_rqst.headers[hdr] = request.headers[hdr]
             # Uploading request body happens at the entering of the block,
             # and downloading response body happens in the read loop inside.
+            if use_token_auth_session:
+                # Deliver cookies for token-based request.
+                api_rqst.session.aiohttp_session.cookie_jar.update_cookies(request.cookies)
             async with api_rqst.fetch() as up_resp:
                 down_resp = web.StreamResponse()
                 down_resp.set_status(up_resp.status, up_resp.reason)
