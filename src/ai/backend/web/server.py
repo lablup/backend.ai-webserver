@@ -381,6 +381,80 @@ async def logout_handler(request: web.Request) -> web.Response:
     return web.Response(status=201)
 
 
+async def token_login_handler(request: web.Request) -> web.Response:
+    config = request.app['config']
+
+    # Check browser session exists.
+    session = await get_session(request)
+    if session.get('authenticated', False):
+        return web.HTTPBadRequest(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/generic-bad-request',
+            'title': 'You have already logged in.',
+        }), content_type='application/problem+json')
+
+    # Check if auth token is delivered through cookie.
+    auth_token_name = config['api'].get('auth_token_name')
+    auth_token = request.cookies.get(auth_token_name)
+    if not auth_token:
+        return web.HTTPBadRequest(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/invalid-api-params',
+            'title': 'You must provide cookie-based authentication token',
+        }), content_type='application/problem+json')
+
+    # Login with the token.
+    # We do not pose consecutive login failure for this handler since
+    # user may frequently click edu-api launcher button.
+    result: MutableMapping[str, Any] = {
+        'authenticated': False,
+        'data': None,
+    }
+    try:
+        anon_api_config = APIConfig(
+            domain=config['api']['domain'],
+            endpoint=config['api']['endpoint'],
+            access_key='', secret_key='',  # anonymous session
+            user_agent=user_agent,
+            skip_sslcert_validation=not config['api'].get('ssl-verify', True),
+        )
+        assert anon_api_config.is_anonymous
+        async with APISession(config=anon_api_config) as api_session:
+            # Instead of email and password, cookie token will be used for auth.
+            api_session.aiohttp_session.cookie_jar.update_cookies(request.cookies)
+            token = await api_session.User.authorize('fake-email', 'fake-pwd')
+            stored_token = {
+                'type': 'keypair',
+                'access_key': token.content['access_key'],
+                'secret_key': token.content['secret_key'],
+                'role': token.content['role'],
+                'status': token.content.get('status'),
+            }
+            public_return = {
+                'access_key': token.content['access_key'],
+                'role': token.content['role'],
+                'status': token.content.get('status'),
+            }
+            session['authenticated'] = True
+            session['token'] = stored_token  # store full token
+            result['authenticated'] = True
+            result['data'] = public_return  # store public info from token
+    except BackendClientError as e:
+        return web.HTTPBadGateway(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/bad-gateway',
+            'title': "The proxy target server is inaccessible.",
+            'details': str(e),
+        }), content_type='application/problem+json')
+    except BackendAPIError as e:
+        log.info('Authorization failed for token {}: {}', auth_token, e)
+        result['authenticated'] = False
+        result['data'] = {
+            'type': e.data.get('type'),
+            'title': e.data.get('title'),
+            'details': e.data.get('msg'),
+        }
+        session['authenticated'] = False
+    return web.json_response(result)
+
+
 async def server_shutdown(app):
     pass
 
@@ -425,6 +499,7 @@ async def server_main(loop, pidx, args):
     app.router.add_route('PATCH', '/func/{path:folders/_/tus/upload/.*$}', anon_web_plugin_handler)
     app.router.add_route('OPTIONS', '/func/{path:folders/_/tus/upload/.*$}', anon_web_plugin_handler)
     cors.add(app.router.add_route('POST', '/server/login', login_handler))
+    cors.add(app.router.add_route('POST', '/server/token-login', token_login_handler))
     cors.add(app.router.add_route('POST', '/server/login-check', login_check_handler))
     cors.add(app.router.add_route('POST', '/server/logout', logout_handler))
     cors.add(app.router.add_route('GET', '/func/{path:hanati/user}', anon_web_plugin_handler))
