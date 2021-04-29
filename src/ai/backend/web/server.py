@@ -394,6 +394,11 @@ async def token_login_handler(request: web.Request) -> web.Response:
 
     # Check if auth token is delivered through cookie.
     auth_token_name = config['api'].get('auth_token_name')
+    if not auth_token_name:
+        return web.HTTPBadRequest(text=json.dumps({
+            'type': 'https://api.backend.ai/probs/invalid-api-params',
+            'title': 'Auth token name is not defined',
+        }), content_type='application/problem+json')
     auth_token = request.cookies.get(auth_token_name)
     if not auth_token:
         return web.HTTPBadRequest(text=json.dumps({
