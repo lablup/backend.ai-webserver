@@ -127,6 +127,8 @@ async def web_handler(request, *, is_anonymous=False) -> web.StreamResponse:
             # but need to keep the client's version header so that
             # the final clients may perform its own API versioning support.
             request_api_version = request.headers.get('X-BackendAI-Version', None)
+            # Deliver cookie for token-based authentication.
+            api_session.aiohttp_session.cookie_jar.update_cookies(request.cookies)
             # We treat all requests and responses as streaming universally
             # to be a transparent proxy.
             api_rqst = Request(
