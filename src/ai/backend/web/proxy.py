@@ -199,6 +199,8 @@ async def web_plugin_handler(request, *, is_anonymous=False) -> web.StreamRespon
                 body['domain'] = request.app['config']['api']['domain']
                 content = json.dumps(body).encode('utf8')
             request_api_version = request.headers.get('X-BackendAI-Version', None)
+            # Deliver cookie for token-based authentication.
+            api_session.aiohttp_session.cookie_jar.update_cookies(request.cookies)
             api_rqst = Request(
                 request.method, path, content,
                 params=request.query,
