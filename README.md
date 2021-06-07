@@ -1,5 +1,7 @@
 # Backend.AI Web Server
 
+[![GitHub version](https://badge.fury.io/gh/lablup%2Fbackend.ai-webserver.svg)](https://badge.fury.io/gh/lablup%2Fbackend.ai-webserver)
+
 A webapp hosting daemon which serves our `webui` as a SPA and proxies API requests
 
 
