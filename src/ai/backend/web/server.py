@@ -69,6 +69,7 @@ signupSupport = {{signup_support}}
 allowChangeSigninMode = {{allow_change_signin_mode}}
 allowAnonymousChangePassword = {{allow_anonymous_change_password}}
 allowProjectResourceMonitor = {{allow_project_resource_monitor}}
+allowManualImageNameForSession = {{allow_manual_image_name_for_session}}
 autoLogout = {{auto_logout}}
 
 [resources]
@@ -178,8 +179,10 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
                 'true' if config['service'].get('allow_anonymous_change_password') else 'false',
             'allow_project_resource_monitor':
                 'true' if config['service']['allow_project_resource_monitor'] else 'false',
+            'allow_manual_image_name_for_session':
+                'true' if config['service'].get('allow_manual_image_name_for_session') else 'false',
             'auto_logout':
-                'true' if config['service'].get('auto_logout') else 'false',
+                'true' if config['session'].get('auto_logout') else 'false',
             'open_port_to_public': open_port_to_public,
             'max_cpu_cores_per_container': max_cpu_cores_per_container,
             'max_cuda_devices_per_container': max_cuda_devices_per_container,
