@@ -384,6 +384,14 @@ async def logout_handler(request: web.Request) -> web.Response:
     return web.Response(status=201)
 
 
+async def webserver_healthcheck(request: web.Request) -> web.Response:
+    result = {
+        'version': __version__,
+        'details': 'Success'
+    }
+    return web.json_response(result)
+
+
 async def token_login_handler(request: web.Request) -> web.Response:
     config = request.app['config']
 
@@ -510,6 +518,7 @@ async def server_main(loop, pidx, args):
     cors.add(app.router.add_route('POST', '/server/token-login', token_login_handler))
     cors.add(app.router.add_route('POST', '/server/login-check', login_check_handler))
     cors.add(app.router.add_route('POST', '/server/logout', logout_handler))
+    cors.add(app.router.add_route('GET', '/func/ping', webserver_healthcheck))
     cors.add(app.router.add_route('GET', '/func/{path:hanati/user}', anon_web_plugin_handler))
     cors.add(app.router.add_route('GET', '/func/{path:cloud/.*$}', anon_web_plugin_handler))
     cors.add(app.router.add_route('POST', '/func/{path:cloud/.*$}', anon_web_plugin_handler))
