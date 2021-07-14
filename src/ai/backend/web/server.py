@@ -75,6 +75,7 @@ autoLogout = {{auto_logout}}
 [resources]
 openPortToPublic = {{open_port_to_public}}
 maxCPUCoresPerContainer = {{max_cpu_cores_per_container}}
+maxMemoryPerContainer = {{max_memory_per_container}}
 maxCUDADevicesPerContainer = {{max_cuda_devices_per_container}}
 maxCUDASharesPerContainer = {{max_cuda_shares_per_container}}
 maxShmPerContainer = {{max_shm_per_container}}
@@ -148,6 +149,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
         if 'resources' in config:
             open_port_to_public = 'true' if config['resources'].get('open_port_to_public') else 'false'
             max_cpu_cores_per_container = config['resources'].get('max_cpu_cores_per_container', 64)
+            max_memory_per_container = config['resources'].get('max_memory_per_container', 64)
             max_cuda_devices_per_container = config['resources'].get(
                     'max_cuda_devices_per_container', 16)
             max_cuda_shares_per_container = config['resources'].get(
@@ -157,6 +159,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
         else:
             open_port_to_public = 'false'
             max_cpu_cores_per_container = 64
+            max_memory_per_container = 64
             max_cuda_devices_per_container = 16
             max_cuda_shares_per_container = 16
             max_shm_per_container = 2
@@ -185,6 +188,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
                 'true' if config['session'].get('auto_logout') else 'false',
             'open_port_to_public': open_port_to_public,
             'max_cpu_cores_per_container': max_cpu_cores_per_container,
+            'max_memory_per_container': max_memory_per_container,
             'max_cuda_devices_per_container': max_cuda_devices_per_container,
             'max_cuda_shares_per_container': max_cuda_shares_per_container,
             'max_shm_per_container': max_shm_per_container,
