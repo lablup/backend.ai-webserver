@@ -71,6 +71,7 @@ allowAnonymousChangePassword = {{allow_anonymous_change_password}}
 allowProjectResourceMonitor = {{allow_project_resource_monitor}}
 allowManualImageNameForSession = {{allow_manual_image_name_for_session}}
 autoLogout = {{auto_logout}}
+debug = {{webui_debug}}
 
 [resources]
 openPortToPublic = {{open_port_to_public}}
@@ -184,6 +185,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
                 'true' if config['service']['allow_project_resource_monitor'] else 'false',
             'allow_manual_image_name_for_session':
                 'true' if config['service'].get('allow_manual_image_name_for_session') else 'false',
+            'webui_debug': 'true' if config['service'].get('webui_debug') else 'false',
             'auto_logout':
                 'true' if config['session'].get('auto_logout') else 'false',
             'open_port_to_public': open_port_to_public,
