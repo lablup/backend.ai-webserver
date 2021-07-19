@@ -1,3 +1,3 @@
-__version__ = '21.09.0pre1'
+__version__ = '21.09.0pre2'
 
 user_agent = f'Backend.AI Web Server {__version__}'
