@@ -441,7 +441,10 @@ async def token_login_handler(request: web.Request) -> web.Response:
         assert anon_api_config.is_anonymous
         async with APISession(config=anon_api_config) as api_session:
             # Send X-Forwarded-For header for token authentication with the client IP.
-            _headers = {'X-Forwarded-For': request.headers.get('X-Forwarded-For', '')}
+            client_ip = request.headers.get('X-Forwarded-For')
+            if not client_ip:
+                client_ip = request.remote
+            _headers = {'X-Forwarded-For': client_ip}
             api_session.aiohttp_session.headers.update(_headers)
             # Instead of email and password, cookie token will be used for auth.
             api_session.aiohttp_session.cookie_jar.update_cookies(request.cookies)
