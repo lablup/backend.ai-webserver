@@ -127,6 +127,12 @@ async def web_handler(request, *, is_anonymous=False) -> web.StreamResponse:
             # but need to keep the client's version header so that
             # the final clients may perform its own API versioning support.
             request_api_version = request.headers.get('X-BackendAI-Version', None)
+            # Send X-Forwarded-For header for token authentication with the client IP.
+            client_ip = request.headers.get('X-Forwarded-For')
+            if not client_ip:
+                client_ip = request.remote
+            _headers = {'X-Forwarded-For': client_ip}
+            api_session.aiohttp_session.headers.update(_headers)
             # Deliver cookie for token-based authentication.
             api_session.aiohttp_session.cookie_jar.update_cookies(request.cookies)
             # We treat all requests and responses as streaming universally
@@ -199,6 +205,12 @@ async def web_plugin_handler(request, *, is_anonymous=False) -> web.StreamRespon
                 body['domain'] = request.app['config']['api']['domain']
                 content = json.dumps(body).encode('utf8')
             request_api_version = request.headers.get('X-BackendAI-Version', None)
+            # Send X-Forwarded-For header for token authentication with the client IP.
+            client_ip = request.headers.get('X-Forwarded-For')
+            if not client_ip:
+                client_ip = request.remote
+            _headers = {'X-Forwarded-For': client_ip}
+            api_session.aiohttp_session.headers.update(_headers)
             # Deliver cookie for token-based authentication.
             api_session.aiohttp_session.cookie_jar.update_cookies(request.cookies)
             api_rqst = Request(
