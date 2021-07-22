@@ -1,0 +1,1 @@
+Deliver the client IP by referencing request.remote  when X-Forwarded-For is empty.
