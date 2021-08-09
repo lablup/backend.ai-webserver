@@ -82,8 +82,15 @@ maxCUDASharesPerContainer = {{max_cuda_shares_per_container}}
 maxShmPerContainer = {{max_shm_per_container}}
 maxFileUploadSize = {{max_file_upload_size}}
 
+[environments]
+{% if environment_allowlist %}
+allowlist = "{{environment_allowlist}}"
+{% endif %}
+
 [menu]
+{% if menu_blocklist %}
 blocklist = "{{menu_blocklist}}"
+{% endif %}
 
 {% if console_menu_plugins %}
 [plugin]
@@ -195,6 +202,7 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'max_cuda_shares_per_container': max_cuda_shares_per_container,
             'max_shm_per_container': max_shm_per_container,
             'max_file_upload_size': max_file_upload_size,
+            'environment_allowlist': config['environments'].get('allowlist', ''),
             'menu_blocklist': config['ui'].get('menu_blocklist', ''),
             'console_menu_plugins': console_menu_plugins,
             'license_edition': license_edition,
