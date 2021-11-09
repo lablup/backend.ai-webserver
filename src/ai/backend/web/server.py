@@ -1,3 +1,4 @@
+import asyncio
 from functools import partial
 import logging
 import logging.config
@@ -7,11 +8,15 @@ from pathlib import Path
 import pkg_resources
 from pprint import pprint
 import re
+import socket
 import ssl
 import sys
 import time
 from typing import (
-    Any, MutableMapping,
+    Any,
+    AsyncIterator,
+    MutableMapping,
+    Tuple,
 )
 
 from aiohttp import web
@@ -25,6 +30,7 @@ import jinja2
 from setproctitle import setproctitle
 import toml
 import uvloop
+import yarl
 
 from ai.backend.client.config import APIConfig
 from ai.backend.client.exceptions import BackendClientError, BackendAPIError
@@ -296,8 +302,8 @@ async def login_handler(request: web.Request) -> web.Response:
     }
     try:
         async def _get_login_history():
-            login_history = await request.app['redis'].execute(
-                'get', f'login_history_{creds["username"]}'
+            login_history = await request.app['redis'].get(
+                f'login_history_{creds["username"]}',
             )
             if not login_history:
                 login_history = {
@@ -321,7 +327,7 @@ async def login_handler(request: web.Request) -> web.Response:
                 'last_login_attempt': last_login_attempt,
                 'login_fail_count': login_fail_count,
             })
-            await request.app['redis'].execute('set', key, value)
+            await request.app['redis'].set(key, value)
 
         # Block login if there are too many consecutive failed login attempts.
         BLOCK_TIME = config['session'].get('login_block_time', 1200)
@@ -491,28 +497,45 @@ async def token_login_handler(request: web.Request) -> web.Response:
     return web.json_response(result)
 
 
-async def server_shutdown(app):
+async def server_shutdown(app) -> None:
     pass
 
 
-async def server_cleanup(app):
-    app['redis'].close()
-    await app['redis'].wait_closed()
+async def server_cleanup(app) -> None:
+    await app['redis'].close()
 
 
 @aiotools.server
-async def server_main(loop, pidx, args):
+async def server_main(
+    loop: asyncio.AbstractEventLoop,
+    pidx: int,
+    args: Tuple[Any, ...],
+) -> AsyncIterator[None]:
     config = args[0]
     app = web.Application()
     app['config'] = config
-    app['redis'] = await aioredis.create_pool(
-        (config['session']['redis']['host'],
-         config['session']['redis']['port']),
-        db=config['session']['redis'].get('db', 0),
-        password=config['session']['redis'].get('password', None))
+    redis_url = (
+        yarl.URL("redis://host")
+        .with_host(config['session']['redis']['host'])
+        .with_port(config['session']['redis']['port'])
+        .with_password(config['session']['redis'].get('password', None))
+        / str(config['session']['redis'].get('db', 0))  # noqa
+    )
+    keepalive_options = {}
+    if hasattr(socket, 'TCP_KEEPIDLE'):
+        keepalive_options[socket.TCP_KEEPIDLE] = 20
+    if hasattr(socket, 'TCP_KEEPINTVL'):
+        keepalive_options[socket.TCP_KEEPINTVL] = 5
+    if hasattr(socket, 'TCP_KEEPCNT'):
+        keepalive_options[socket.TCP_KEEPCNT] = 3
+    app['redis'] = await aioredis.Redis.from_url(
+        str(redis_url),
+        socket_keepalive=True,
+        socket_keepalive_options=keepalive_options,
+    )
 
     if pidx == 0 and config['session'].get('flush_on_startup', False):
-        await app['redis'].execute('flushdb')
+        await app['redis'].flushdb()
         log.info('flushed session storage.')
     redis_storage = RedisStorage(
         app['redis'],
@@ -600,7 +623,7 @@ async def server_main(loop, pidx, args):
 @click.option('--debug', is_flag=True,
               default=False,
               help='Use more verbose logging.')
-def main(config, debug):
+def main(config: click.Path, debug: bool) -> None:
     config = toml.loads(Path(config).read_text(encoding='utf-8'))
     config['debug'] = debug
     if config['debug']:
