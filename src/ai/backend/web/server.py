@@ -1,3 +1,4 @@
+import asyncio
 from functools import partial
 import logging
 import logging.config
@@ -12,7 +13,10 @@ import ssl
 import sys
 import time
 from typing import (
-    Any, MutableMapping,
+    Any,
+    AsyncIterator,
+    MutableMapping,
+    Tuple,
 )
 
 from aiohttp import web
@@ -493,17 +497,20 @@ async def token_login_handler(request: web.Request) -> web.Response:
     return web.json_response(result)
 
 
-async def server_shutdown(app):
+async def server_shutdown(app) -> None:
     pass
 
 
-async def server_cleanup(app):
-    app['redis'].close()
-    await app['redis'].wait_closed()
+async def server_cleanup(app) -> None:
+    await app['redis'].close()
 
 
 @aiotools.server
-async def server_main(loop, pidx, args):
+async def server_main(
+    loop: asyncio.AbstractEventLoop,
+    pidx: int,
+    args: Tuple[Any, ...],
+) -> AsyncIterator[None]:
     config = args[0]
     app = web.Application()
     app['config'] = config
@@ -616,7 +623,7 @@ async def server_main(loop, pidx, args):
 @click.option('--debug', is_flag=True,
               default=False,
               help='Use more verbose logging.')
-def main(config, debug):
+def main(config: click.Path, debug: bool) -> None:
     config = toml.loads(Path(config).read_text(encoding='utf-8'))
     config['debug'] = debug
     if config['debug']:
