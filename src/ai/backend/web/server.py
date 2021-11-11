@@ -455,11 +455,10 @@ async def token_login_handler(request: web.Request) -> web.Response:
         assert anon_api_config.is_anonymous
         async with APISession(config=anon_api_config) as api_session:
             # Send X-Forwarded-For header for token authentication with the client IP.
-            client_ip = request.headers.get('X-Forwarded-For')
-            if not client_ip:
-                client_ip = request.remote
-            _headers = {'X-Forwarded-For': client_ip}
-            api_session.aiohttp_session.headers.update(_headers)
+            client_ip = request.headers.get('X-Forwarded-For', request.remote)
+            if client_ip:
+                _headers = {'X-Forwarded-For': client_ip}
+                api_session.aiohttp_session.headers.update(_headers)
             # Instead of email and password, cookie token will be used for auth.
             api_session.aiohttp_session.cookie_jar.update_cookies(request.cookies)
             token = await api_session.User.authorize('fake-email', 'fake-pwd')
@@ -617,14 +616,15 @@ async def server_main(
 
 
 @click.command()
-@click.option('-f', '--config', type=click.Path(exists=True),
+@click.option('-f', '--config', 'config_path',
+              type=click.Path(exists=True),
               default='webserver.conf',
               help='The configuration file to use.')
 @click.option('--debug', is_flag=True,
               default=False,
               help='Use more verbose logging.')
-def main(config: click.Path, debug: bool) -> None:
-    config = toml.loads(Path(config).read_text(encoding='utf-8'))
+def main(config_path: str, debug: bool) -> None:
+    config = toml.loads(Path(config_path).read_text(encoding='utf-8'))
     config['debug'] = debug
     if config['debug']:
         debugFlag = 'DEBUG'
@@ -677,7 +677,7 @@ def main(config: click.Path, debug: bool) -> None:
         uvloop.install()
         aiotools.start_server(
             server_main,
-            num_workers=min(4, os.cpu_count()),
+            num_workers=min(4, os.cpu_count() or 1),
             args=(config,),
         )
     finally:
