@@ -10,7 +10,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: "3.9"
     - name: Cache pip packages
       uses: actions/cache@v2
       with:
@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install -U pip setuptools
-        FALLBACK_BRANCH=main
+        FALLBACK_BRANCH=21.09
         if [ -n "$GITHUB_HEAD_REF" ]; then
           export GHBRANCH="${GITHUB_HEAD_REF#refs/heads/}"
         else
@@ -57,7 +57,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: "3.9"
     - name: Cache pip packages
       uses: actions/cache@v2
       with:
@@ -69,7 +69,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install -U pip setuptools
-        FALLBACK_BRANCH=main
+        FALLBACK_BRANCH=21.09
         if [ -n "$GITHUB_HEAD_REF" ]; then
           export GHBRANCH="${GITHUB_HEAD_REF#refs/heads/}"
         else
@@ -104,7 +104,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: "3.9"
     - name: Cache pip packages
       uses: actions/cache@v2
       with:
@@ -116,7 +116,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install -U pip setuptools
-        FALLBACK_BRANCH=main
+        FALLBACK_BRANCH=21.09
         if [ -n "$GITHUB_HEAD_REF" ]; then
           export GHBRANCH="${GITHUB_HEAD_REF#refs/heads/}"
         else
@@ -152,7 +152,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: "3.9"
     - name: Cache pip packages
       uses: actions/cache@v2
       with:
