@@ -50,8 +50,6 @@ Changes
 * Updated the webui version to 21.09.0
 
 ### Features
-* Adds configurations on maximum resources per session (cores, CUDA devices, shared memory, and upload size limit). ([#28](https://github.com/lablup/backend.ai-webserver/issues/28))
-* Prevents too many login attempts, usually an indication of abuse and/or malicious robots. Block time and allowed fail count are configurable. ([#29](https://github.com/lablup/backend.ai-webserver/issues/29))
 * Add an option to support creating a compute session by manually typing the name of an image. ([#37](https://github.com/lablup/backend.ai-webserver/issues/37))
 * Add ping API to to check webserver health. ([#38](https://github.com/lablup/backend.ai-webserver/issues/38))
 * Send X-Forwarded-For header from token login handler for token authentication. ([#40](https://github.com/lablup/backend.ai-webserver/issues/40))
@@ -59,38 +57,11 @@ Changes
 * General image allowlist support on configuration file ([#44](https://github.com/lablup/backend.ai-webserver/issues/44))
 
 ### Fixes
-* Use persistent manager endpoint for websocket streaming (app) per session and per app by storing the endpoint information in the browser session. ([#30](https://github.com/lablup/backend.ai-webserver/issues/30))
 * Send cookies for an api request. This is required to cookie-based authentication for each request. ([#35](https://github.com/lablup/backend.ai-webserver/issues/35))
 * Add max_memory_per_container in configuration file to limit memory allocation for each container. ([#39](https://github.com/lablup/backend.ai-webserver/issues/39))
 * Deliver the client IP by referencing request.remote  when X-Forwarded-For is empty. ([#43](https://github.com/lablup/backend.ai-webserver/issues/43))
 
-### Miscellaneous
-* Improve GitHub Actions CI workflows to run as single pipeline and make the deployment to be triggered via tagged commits like other repositories ([#31](https://github.com/lablup/backend.ai-webserver/issues/31))
-* Update the name of console-server to webserver ([#32](https://github.com/lablup/backend.ai-webserver/issues/32))
 
-
-## 20.09.0b1 (2020-12-02)
-
-* Updated the console version to 20.11.3
-
-
-## 20.09.0a3 (2020-11-03)
-
-* Updated the console version to 20.11.1
-
-### Fixes
-* Fix a 502 HTTP error returned when starting service ports via CLI in the session mode by excluding the `stream/session/{id}/apps` API from the websocket routes since it's a plain HTTP GET API. ([#27](https://github.com/lablup/backend.ai-console-server/issues/27))
-
-
-## 20.09.0a2 (2020-10-28)
-
-### Features
-* Add option to enable/disable open port to public checkbox. ([#22](https://github.com/lablup/backend.ai-console-server/issues/22))
-
-### Fixes
-* Specify no-store only to disable cache for static files. ([#21](https://github.com/lablup/backend.ai-console-server/issues/21))
-* Update dependencies (aiohttp 3.7, etc.) which enables use of `SameSite` cookies ([#23](https://github.com/lablup/backend.ai-console-server/issues/23))
-* Update aiohttp to 3.7.2 to fix [an upstream issue](https://github.com/aio-libs/aiohttp/issue/5149) related to `sendfile()` fallback with uvloop ([#25](https://github.com/lablup/backend.ai-console-server/issues/25))
-
-### Miscellaneous
-* Update GitHub Actions workflows to handle tests, deployment and changelog linting with submodules ([#26](https://github.com/lablup/backend.ai-console-server/issues/26))
+## Older Changelogs
+* [21.03](https://github.com/lablup/backend.ai-webserver/blob/21.03/CHANGELOG.md)
+* [20.09](https://github.com/lablup/backend.ai-webserver/blob/20.09/CHANGELOG.md)
