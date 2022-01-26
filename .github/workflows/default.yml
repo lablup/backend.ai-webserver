@@ -101,10 +101,10 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: typecheck-mypy-${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
+        key: test-pytest-${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
         restore-keys: |
-          typecheck-mypy-${{ runner.os }}-pip-${{ matrix.python-version }}
-          typecheck-mypy-${{ runner.os }}-pip-
+          test-pytest-${{ runner.os }}-pip-${{ matrix.python-version }}
+          test-pytest-${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
         python -m pip install -U pip setuptools
@@ -145,10 +145,10 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: test-pytest-${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
+        key: deploy-pypi-${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
         restore-keys: |
-          test-pytest-${{ runner.os }}-pip-${{ matrix.python-version }}
-          test-pytest-${{ runner.os }}-pip-
+          deploy-pypi-${{ runner.os }}-pip-${{ matrix.python-version }}
+          deploy-pypi-${{ runner.os }}-pip-
     - name: Install dependencies
       env:
         REQUIREMENTS_FILE: build
