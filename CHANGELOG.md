@@ -23,7 +23,7 @@ Changes
 * Update and pin the client SDK version to 21.09.3
 
 
-## 21.09.3 (2022-01-26)
+## 21.09.3 (2022-01-13)
 
 ### Web UI
 * Updated the webui version to 21.09.3
@@ -32,19 +32,19 @@ Changes
 * Add allow_signup_without_confirmation in configuration file to disable token input and email confirmation ([#50](https://github.com/lablup/backend.ai-webserver/issues/50))
 
 
-## 21.09.2 (2022-01-26)
+## 21.09.2 (2021-11-09)
 
 ### Web UI
 * Updated the webui version to 21.09.2
 
 
-## 21.09.1 (2022-01-26)
+## 21.09.1 (2021-10-21)
 
 ### Web UI
 * Updated the webui version to 21.09.1
 
 
-## 21.09.0 (2022-01-26)
+## 21.09.0 (2022-10-21)
 
 ### Web UI
 * Updated the webui version to 21.09.0
