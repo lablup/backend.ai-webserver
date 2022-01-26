@@ -29,17 +29,12 @@ jobs:
           export GHBRANCH="${GITHUB_REF#refs/heads/}"
         fi
         echo "HEAD: ${GHBRANCH} (${GITHUB_REF}, ${GITHUB_HEAD_REF})"
-        # Use the same branch (if exists) for the backend.ai-common installation
+        # Use the same branch (if exists) for the backend.ai-client-py installation
         set +e
         git ls-remote --heads 'https://github.com/lablup/backend.ai-client-py' | grep -q "refs/heads/${GHBRANCH}"
         if [ $? -eq 0 ]; then
           sed -i "s%\(backend.ai-client-py\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/lint.txt
         fi
-        git ls-remote --heads 'https://github.com/lablup/backend.ai-common' | grep -q "refs/heads/${GHBRANCH}"
-        if [ $? -eq 0 ]; then
-          sed -i "s%\(backend.ai-common\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/lint.txt
-        fi
-        set -e
         python -m pip install -U -r requirements/lint.txt
     - name: Lint with flake8
       run: |
@@ -76,15 +71,11 @@ jobs:
           export GHBRANCH="${GITHUB_REF#refs/heads/}"
         fi
         echo "HEAD: ${GHBRANCH} (${GITHUB_REF}, ${GITHUB_HEAD_REF})"
-        # Use the same branch (if exists) for the backend.ai-common installation
+        # Use the same branch (if exists) for the backend.ai-client-py installation
         set +e
         git ls-remote --heads 'https://github.com/lablup/backend.ai-client-py' | grep -q "refs/heads/${GHBRANCH}"
         if [ $? -eq 0 ]; then
           sed -i "s%\(backend.ai-client-py\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/typecheck.txt
-        fi
-        git ls-remote --heads 'https://github.com/lablup/backend.ai-common' | grep -q "refs/heads/${GHBRANCH}"
-        if [ $? -eq 0 ]; then
-          sed -i "s%\(backend.ai-common\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/typecheck.txt
         fi
         set -e
         python -m pip install -U -r requirements/typecheck.txt
@@ -109,10 +100,10 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: typecheck-mypy-${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
+        key: test-pytest-${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
         restore-keys: |
-          typecheck-mypy-${{ runner.os }}-pip-${{ matrix.python-version }}
-          typecheck-mypy-${{ runner.os }}-pip-
+          test-pytest-${{ runner.os }}-pip-${{ matrix.python-version }}
+          test-pytest-${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
         python -m pip install -U pip setuptools
@@ -123,15 +114,11 @@ jobs:
           export GHBRANCH="${GITHUB_REF#refs/heads/}"
         fi
         echo "HEAD: ${GHBRANCH} (${GITHUB_REF}, ${GITHUB_HEAD_REF})"
-        # Use the same branch (if exists) for the backend.ai-common installation
+        # Use the same branch (if exists) for the backend.ai-client-py installation
         set +e
         git ls-remote --heads 'https://github.com/lablup/backend.ai-client-py' | grep -q "refs/heads/${GHBRANCH}"
         if [ $? -eq 0 ]; then
           sed -i "s%\(backend.ai-client-py\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/test.txt
-        fi
-        git ls-remote --heads 'https://github.com/lablup/backend.ai-common' | grep -q "refs/heads/${GHBRANCH}"
-        if [ $? -eq 0 ]; then
-          sed -i "s%\(backend.ai-common\)@${FALLBACK_BRANCH}%\1@${GHBRANCH}%" requirements/test.txt
         fi
         set -e
         python -m pip install -U -r requirements/test.txt
@@ -157,7 +144,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: test-pytest-${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
+        key: deploy-pypi-${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
         restore-keys: |
           test-pytest-${{ runner.os }}-pip-${{ matrix.python-version }}
           test-pytest-${{ runner.os }}-pip-
