@@ -79,7 +79,7 @@ allowManualImageNameForSession = {{allow_manual_image_name_for_session}}
 allowSignupWithoutConfirmation = {{allow_signup_without_confirmation}}
 autoLogout = {{auto_logout}}
 debug = {{webui_debug}}
-maskUserInfo = {{mask_userinfo}}
+maskUserInfo = {{mask_user_info}}
 
 [resources]
 openPortToPublic = {{open_port_to_public}}
@@ -205,8 +205,8 @@ async def console_handler(request: web.Request) -> web.StreamResponse:
             'webui_debug': 'true' if config['service'].get('webui_debug') else 'false',
             'auto_logout':
                 'true' if config['session'].get('auto_logout') else 'false',
-            'mask_userinfo':
-                'true' if config['service'].get('mask_userinfo') else 'false',
+            'mask_user_info':
+                'true' if config['service'].get('mask_user_info') else 'false',
             'open_port_to_public': open_port_to_public,
             'max_cpu_cores_per_container': max_cpu_cores_per_container,
             'max_memory_per_container': max_memory_per_container,
