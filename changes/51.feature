@@ -1,0 +1,1 @@
+Add mask_userinfo in configuration file to hiding user information
