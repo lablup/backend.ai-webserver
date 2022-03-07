@@ -16,6 +16,11 @@ Changes
 
 <!-- towncrier release notes start -->
 
+## 21.09.5 (2022-03-07)
+
+### Features
+* Add mask_user_info in configuration file to hiding user information ([#51](https://github.com/lablup/backend.ai-webserver/issues/51))
+
 
 ## 21.09.4 (2022-01-26)
 
