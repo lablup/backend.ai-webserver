@@ -2,10 +2,11 @@
 package = "ai.backend.web"
 filename = "CHANGELOG.md"
 directory = "changes/"
-title_format = "{version} ({project_date})"
+title_format = "## {version} ({project_date})"
 template = "changes/template.md"
+start_string = "<!-- towncrier release notes start -->\n"
 issue_format = "([#{issue}](https://github.com/lablup/backend.ai-webserver/issues/{issue}))"
-underlines = ["-", "", ""]
+underlines = ["", "", ""]
 
 [[tool.towncrier.type]]
     directory = "breaking"
