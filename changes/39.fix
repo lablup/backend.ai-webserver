@@ -1,1 +1,0 @@
-Add max_memory_per_container in configuration file to limit memory allocation for each container.

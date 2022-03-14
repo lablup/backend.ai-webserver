@@ -1,1 +1,0 @@
-Add allow_signup_without_confirmation in configuration file to disable token input and email confirmation
