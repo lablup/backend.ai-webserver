@@ -18,7 +18,7 @@ Changes
 
 ## 22.03.0b1 (2022-04-12)
 
-No significant changes.
+* Update WebUI version to 22.03.0.
 
 
 ## 22.03.0a1 (2022-03-14)
