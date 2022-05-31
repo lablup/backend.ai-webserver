@@ -38,7 +38,7 @@ from ai.backend.client.session import AsyncSession as APISession
 
 from . import __version__, user_agent
 from .logging import BraceStyleAdapter
-from .proxy import web_handler, websocket_handler, web_plugin_handler
+from .proxy import web_handler, websocket_handler, web_plugin_handler, pipeline_handler
 
 log = BraceStyleAdapter(logging.getLogger('ai.backend.web.server'))
 static_path = Path(pkg_resources.resource_filename('ai.backend.web', 'static')).resolve()
@@ -582,6 +582,11 @@ async def server_main(
     cors.add(app.router.add_route('POST', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('PATCH', '/func/{path:.*$}', web_handler))
     cors.add(app.router.add_route('DELETE', '/func/{path:.*$}', web_handler))
+    cors.add(app.router.add_route('GET', '/flow/{path:.*$}', pipeline_handler))
+    cors.add(app.router.add_route('PUT', '/flow/{path:.*$}', pipeline_handler))
+    cors.add(app.router.add_route('POST', '/flow/{path:.*$}', pipeline_handler))
+    cors.add(app.router.add_route('PATCH', '/flow/{path:.*$}', pipeline_handler))
+    cors.add(app.router.add_route('DELETE', '/flow/{path:.*$}', pipeline_handler))
     if config['service']['mode'] == 'webui':
         fallback_handler = console_handler
     elif config['service']['mode'] == 'static':
