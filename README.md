@@ -1,5 +1,8 @@
 # Backend.AI Web Server
 
+> ### !!! Deprecation notice
+> This repository is deprecated and no longer maintained. The code has been migrated to our semi-mono repository at https://github.com/lablup/backend.ai.
+
 [![GitHub version](https://badge.fury.io/gh/lablup%2Fbackend.ai-webserver.svg)](https://badge.fury.io/gh/lablup%2Fbackend.ai-webserver) [![PyPI version](https://badge.fury.io/py/backend.ai-webserver.svg)](https://badge.fury.io/py/backend.ai-webserver)
 
 A webapp hosting daemon which serves our `webui` as a SPA and proxies API requests
